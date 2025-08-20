@@ -1,12 +1,10 @@
 import { useState } from 'react';
-import { useMultiplayerState, usePlayersList, useIsHost } from 'playroomkit';
-import RoomSelector from '../components/RoomSelector';
-import Lobby from '../components/Lobby';
+import APIKeyModal from '../components/APIKeyModal';
 import GameScreen from '../components/GameScreen';
 import ResultDisplay from '../components/ResultDisplay';
 import { useGroqAPI } from '../hooks/useGroqAPI';
 
-type GamePhase = 'room-select' | 'lobby' | 'playing' | 'result' | 'finished';
+type GameState = 'setup' | 'playing' | 'result' | 'finished';
 
 const scenarios = [
   "Zombie outbreak in shopping mall. You're trapped with limited supplies. Survive 24 hours.",
@@ -17,42 +15,19 @@ const scenarios = [
 ];
 
 const Index = () => {
-  const [gamePhase, setGamePhase] = useState<GamePhase>('room-select');
-  const [roomId, setRoomId] = useState('');
+  const [gameState, setGameState] = useState<GameState>('setup');
+  const [apiKey, setApiKey] = useState('');
   const [currentRound, setCurrentRound] = useState(1);
   const [score, setScore] = useState(0);
   const [currentScenario, setCurrentScenario] = useState('');
   const [lastResult, setLastResult] = useState({ narrative: '', survived: false });
   const [error, setError] = useState('');
 
-  // Multiplayer state
-  const [gameState, setGameState] = useMultiplayerState('gameState', {
-    phase: 'lobby',
-    currentRound: 1,
-    currentScenario: '',
-    hostApiKey: ''
-  });
-  
-  const players = usePlayersList(true);
-  const isHost = useIsHost();
+  const { analyzeStrategy, isLoading } = useGroqAPI(apiKey);
 
-  const { analyzeStrategy, isLoading } = useGroqAPI(gameState.hostApiKey);
-
-  const handleRoomJoined = () => {
-    const currentRoomId = (window as any).Playroom?.getRoomId?.() || 'UNKNOWN';
-    setRoomId(currentRoomId);
-    setGamePhase('lobby');
-  };
-
-  const handleGameStart = (apiKey: string) => {
-    if (isHost) {
-      setGameState({
-        ...gameState,
-        hostApiKey: apiKey,
-        phase: 'playing'
-      });
-    }
-    setGamePhase('playing');
+  const handleApiKeySubmit = (key: string) => {
+    setApiKey(key);
+    setGameState('setup');
   };
 
   const startGame = () => {
@@ -61,7 +36,7 @@ const Index = () => {
     setError('');
     const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
     setCurrentScenario(randomScenario);
-    setGamePhase('playing');
+    setGameState('playing');
   };
 
   const handleStrategySubmit = async (strategy: string) => {
@@ -74,7 +49,7 @@ const Index = () => {
         setScore(prev => prev + 1);
       }
       
-      setGamePhase('result');
+      setGameState('result');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to analyze strategy');
     }
@@ -82,17 +57,17 @@ const Index = () => {
 
   const handleContinue = () => {
     if (currentRound >= 3) {
-      setGamePhase('finished');
+      setGameState('finished');
     } else {
       setCurrentRound(prev => prev + 1);
       const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
       setCurrentScenario(randomScenario);
-      setGamePhase('playing');
+      setGameState('playing');
     }
   };
 
   const resetGame = () => {
-    setGamePhase('room-select');
+    setGameState('setup');
     setCurrentRound(1);
     setScore(0);
     setError('');
@@ -106,15 +81,37 @@ const Index = () => {
           <p className="text-muted-foreground">Survival Game</p>
         </header>
 
-        {gamePhase === 'room-select' && (
-          <RoomSelector onRoomJoined={handleRoomJoined} />
+        {gameState === 'setup' && !apiKey && (
+          <>
+            <APIKeyModal 
+              onApiKeySubmit={handleApiKeySubmit}
+              isVisible={true}
+            />
+          </>
         )}
 
-        {gamePhase === 'lobby' && (
-          <Lobby roomId={roomId} onGameStart={handleGameStart} />
+        {gameState === 'setup' && apiKey && (
+          <div className="text-center">
+            <div className="bg-card border border-border p-6 rounded mb-4">
+              <h2 className="text-xl font-bold mb-4 text-card-foreground">Ready to Play</h2>
+              <p className="text-muted-foreground mb-4">
+                You will face 3 random survival scenarios. Each round you have 60 seconds to devise a strategy.
+                The AI will analyze your approach and determine if you survive or perish.
+              </p>
+              <p className="text-muted-foreground mb-4">
+                <strong>Scoring:</strong> 1 point per survival, 0 for death
+              </p>
+            </div>
+            <button
+              onClick={startGame}
+              className="bg-primary text-primary-foreground px-8 py-3 rounded text-lg hover:opacity-90"
+            >
+              Start Game
+            </button>
+          </div>
         )}
 
-        {gamePhase === 'playing' && (
+        {gameState === 'playing' && (
           <GameScreen
             scenario={currentScenario}
             roundNumber={currentRound}
@@ -123,7 +120,7 @@ const Index = () => {
           />
         )}
 
-        {gamePhase === 'result' && (
+        {gameState === 'result' && (
           <ResultDisplay
             narrative={lastResult.narrative}
             survived={lastResult.survived}
@@ -132,7 +129,7 @@ const Index = () => {
           />
         )}
 
-        {gamePhase === 'finished' && (
+        {gameState === 'finished' && (
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4 text-foreground">Final Score</h2>
             <div className="bg-card border border-border p-6 rounded mb-4">
