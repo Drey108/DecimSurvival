@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePlayersList, useIsHost, useMultiplayerState, myPlayer } from 'playroomkit';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,15 +13,27 @@ const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLob
   const [hostApiKey, setHostApiKey] = useState('');
   const players = usePlayersList(true);
   const isHost = useIsHost();
-  const [gameState] = useMultiplayerState('gameState', {
+  const [gameState, setGameState] = useMultiplayerState('game', {
     phase: 'lobby',
     currentRound: 1,
+    scenario: '',
     hostApiKey: ''
   });
 
+  // Auto-start game for all players when host starts
+  useEffect(() => {
+    if (gameState.phase === 'game' && gameState.hostApiKey) {
+      onStartGame(gameState.hostApiKey);
+    }
+  }, [gameState.phase, gameState.hostApiKey, onStartGame]);
+
   const handleStartGame = () => {
     if (hostApiKey.trim() && players.length >= 2) {
-      onStartGame(hostApiKey);
+      setGameState({
+        ...gameState,
+        hostApiKey,
+        phase: 'game'
+      });
     }
   };
 

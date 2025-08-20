@@ -32,9 +32,10 @@ const Index = () => {
   // Multiplayer state
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
-  const [multiplayerState, setMultiplayerState] = useMultiplayerState('gameState', {
+  const [multiplayerState, setMultiplayerState] = useMultiplayerState('game', {
     phase: 'lobby',
     currentRound: 1,
+    scenario: '',
     hostApiKey: ''
   });
   const isHost = useIsHost();
@@ -64,6 +65,11 @@ const Index = () => {
   };
 
   const handleCreateRoom = async () => {
+    if (!playerName.trim()) {
+      setError('Name is required');
+      return;
+    }
+    
     const newRoomCode = generateRoomCode();
     setRoomCode(newRoomCode);
     
@@ -76,12 +82,13 @@ const Index = () => {
       // Set player profile name
       const me = myPlayer();
       if (me) {
-        me.setState('profile', { name: playerName });
+        me.setState('profile', { name: playerName.trim() });
       }
       
       setMultiplayerState({
         phase: 'lobby',
         currentRound: 1,
+        scenario: '',
         hostApiKey: ''
       });
       setGameMode('lobby');
@@ -91,6 +98,11 @@ const Index = () => {
   };
 
   const handleJoinRoom = async (code: string) => {
+    if (!playerName.trim()) {
+      setError('Name is required');
+      return;
+    }
+    
     setRoomCode(code);
     
     try {
@@ -102,7 +114,7 @@ const Index = () => {
       // Set player profile name
       const me = myPlayer();
       if (me) {
-        me.setState('profile', { name: playerName });
+        me.setState('profile', { name: playerName.trim() });
       }
       
       setGameMode('lobby');
@@ -118,12 +130,16 @@ const Index = () => {
 
   const handleMultiplayerStartGame = (hostApiKey: string) => {
     setApiKey(hostApiKey);
+    const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+    setCurrentScenario(randomScenario);
     setMultiplayerState({
       ...multiplayerState,
       hostApiKey,
-      phase: 'playing'
+      phase: 'game',
+      scenario: randomScenario
     });
-    startGame();
+    setGameMode('single'); // Reuse single player game screen
+    setGameState('playing');
   };
 
   // Single player handlers

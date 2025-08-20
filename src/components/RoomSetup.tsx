@@ -14,12 +14,12 @@ const RoomSetup = ({ playerName, setPlayerName, onCreateRoom, onJoinRoom, onBack
   const [joinRoomCode, setJoinRoomCode] = useState('');
 
   const handleJoinRoomCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
     setJoinRoomCode(value);
   };
 
   const handleJoinRoom = () => {
-    if (joinRoomCode.length === 4) {
+    if (joinRoomCode.length === 4 && playerName.trim()) {
       onJoinRoom(joinRoomCode);
     }
   };
@@ -39,6 +39,9 @@ const RoomSetup = ({ playerName, setPlayerName, onCreateRoom, onJoinRoom, onBack
               placeholder="Enter your name"
               className="w-full"
             />
+            {!playerName.trim() && (
+              <p className="text-sm text-destructive mt-1">Name is required</p>
+            )}
           </div>
         </div>
 
@@ -60,7 +63,7 @@ const RoomSetup = ({ playerName, setPlayerName, onCreateRoom, onJoinRoom, onBack
               type="text"
               value={joinRoomCode}
               onChange={handleJoinRoomCodeChange}
-              placeholder="ABCD"
+              placeholder="A1B2"
               className="w-full text-center font-mono text-lg"
               maxLength={4}
             />
