@@ -1,9 +1,14 @@
 import { useState } from 'react';
+import { insertCoin, useMultiplayerState, useIsHost, myPlayer } from 'playroomkit';
 import APIKeyModal from '../components/APIKeyModal';
 import GameScreen from '../components/GameScreen';
 import ResultDisplay from '../components/ResultDisplay';
+import ModeSelector from '../components/ModeSelector';
+import RoomSetup from '../components/RoomSetup';
+import MultiplayerLobby from '../components/MultiplayerLobby';
 import { useGroqAPI } from '../hooks/useGroqAPI';
 
+type GameMode = 'menu' | 'single' | 'multi-setup' | 'lobby';
 type GameState = 'setup' | 'playing' | 'result' | 'finished';
 
 const scenarios = [
@@ -15,6 +20,7 @@ const scenarios = [
 ];
 
 const Index = () => {
+  const [gameMode, setGameMode] = useState<GameMode>('menu');
   const [gameState, setGameState] = useState<GameState>('setup');
   const [apiKey, setApiKey] = useState('');
   const [currentRound, setCurrentRound] = useState(1);
@@ -22,9 +28,105 @@ const Index = () => {
   const [currentScenario, setCurrentScenario] = useState('');
   const [lastResult, setLastResult] = useState({ narrative: '', survived: false });
   const [error, setError] = useState('');
+  
+  // Multiplayer state
+  const [playerName, setPlayerName] = useState('');
+  const [roomCode, setRoomCode] = useState('');
+  const [multiplayerState, setMultiplayerState] = useMultiplayerState('gameState', {
+    phase: 'lobby',
+    currentRound: 1,
+    hostApiKey: ''
+  });
+  const isHost = useIsHost();
 
   const { analyzeStrategy, isLoading } = useGroqAPI(apiKey);
 
+  // Mode selection handlers
+  const handleModeSelect = (mode: 'single' | 'multiplayer') => {
+    if (mode === 'single') {
+      setGameMode('single');
+      setGameState('setup');
+    } else {
+      setGameMode('multi-setup');
+    }
+  };
+
+  const handleBackToModeSelect = () => {
+    setGameMode('menu');
+    setGameState('setup');
+    setPlayerName('');
+    setRoomCode('');
+  };
+
+  // Room handlers
+  const generateRoomCode = () => {
+    return Math.random().toString(36).substring(2, 6).toUpperCase();
+  };
+
+  const handleCreateRoom = async () => {
+    const newRoomCode = generateRoomCode();
+    setRoomCode(newRoomCode);
+    
+    try {
+      await insertCoin({
+        roomCode: newRoomCode,
+        skipLobby: true
+      });
+      
+      // Set player profile name
+      const me = myPlayer();
+      if (me) {
+        me.setState('profile', { name: playerName });
+      }
+      
+      setMultiplayerState({
+        phase: 'lobby',
+        currentRound: 1,
+        hostApiKey: ''
+      });
+      setGameMode('lobby');
+    } catch (error) {
+      setError('Failed to create room');
+    }
+  };
+
+  const handleJoinRoom = async (code: string) => {
+    setRoomCode(code);
+    
+    try {
+      await insertCoin({
+        roomCode: code,
+        skipLobby: true
+      });
+      
+      // Set player profile name
+      const me = myPlayer();
+      if (me) {
+        me.setState('profile', { name: playerName });
+      }
+      
+      setGameMode('lobby');
+    } catch (error) {
+      setError('Failed to join room');
+    }
+  };
+
+  const handleLeaveRoom = () => {
+    setGameMode('multi-setup');
+    setRoomCode('');
+  };
+
+  const handleMultiplayerStartGame = (hostApiKey: string) => {
+    setApiKey(hostApiKey);
+    setMultiplayerState({
+      ...multiplayerState,
+      hostApiKey,
+      phase: 'playing'
+    });
+    startGame();
+  };
+
+  // Single player handlers
   const handleApiKeySubmit = (key: string) => {
     setApiKey(key);
     setGameState('setup');
@@ -67,7 +169,11 @@ const Index = () => {
   };
 
   const resetGame = () => {
-    setGameState('setup');
+    if (gameMode === 'single') {
+      setGameState('setup');
+    } else {
+      setGameMode('menu');
+    }
     setCurrentRound(1);
     setScore(0);
     setError('');
@@ -81,7 +187,29 @@ const Index = () => {
           <p className="text-muted-foreground">Survival Game</p>
         </header>
 
-        {gameState === 'setup' && !apiKey && (
+        {gameMode === 'menu' && (
+          <ModeSelector onSelectMode={handleModeSelect} />
+        )}
+
+        {gameMode === 'multi-setup' && (
+          <RoomSetup
+            playerName={playerName}
+            setPlayerName={setPlayerName}
+            onCreateRoom={handleCreateRoom}
+            onJoinRoom={handleJoinRoom}
+            onBack={handleBackToModeSelect}
+          />
+        )}
+
+        {gameMode === 'lobby' && (
+          <MultiplayerLobby
+            roomCode={roomCode}
+            onStartGame={handleMultiplayerStartGame}
+            onLeaveRoom={handleLeaveRoom}
+          />
+        )}
+
+        {gameMode === 'single' && gameState === 'setup' && !apiKey && (
           <>
             <APIKeyModal 
               onApiKeySubmit={handleApiKeySubmit}
@@ -90,7 +218,7 @@ const Index = () => {
           </>
         )}
 
-        {gameState === 'setup' && apiKey && (
+        {gameMode === 'single' && gameState === 'setup' && apiKey && (
           <div className="text-center">
             <div className="bg-card border border-border p-6 rounded mb-4">
               <h2 className="text-xl font-bold mb-4 text-card-foreground">Ready to Play</h2>
