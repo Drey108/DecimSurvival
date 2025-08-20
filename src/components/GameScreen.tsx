@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useMultiplayerState, usePlayersList, myPlayer } from 'playroomkit';
 import Timer from './Timer';
 import ScenarioDisplay from './ScenarioDisplay';
 
@@ -9,52 +8,95 @@ interface GameScreenProps {
   onStrategySubmit: (strategy: string) => void;
   isLoading: boolean;
   isMultiplayer?: boolean;
+  multiplayerGameState?: any;
+  setMultiplayerGameState?: (state: any) => void;
+  players?: any[];
+  currentPlayer?: any;
 }
 
-const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading, isMultiplayer = false }: GameScreenProps) => {
+const GameScreen = ({ 
+  scenario, 
+  roundNumber, 
+  onStrategySubmit, 
+  isLoading, 
+  isMultiplayer = false,
+  multiplayerGameState,
+  setMultiplayerGameState,
+  players = [],
+  currentPlayer
+}: GameScreenProps) => {
   const [strategy, setStrategy] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const players = usePlayersList(true);
-  
-  const [gameState, setGameState] = useMultiplayerState('game', {
-    phase: 'input',
-    currentRound: 1,
-    scenario: '',
-    timeLeft: 60,
-    playerSubmissions: {},
-    hostApiKey: ''
-  });
 
-  const myPlayerId = myPlayer()?.id;
+  const myPlayerId = currentPlayer?.id;
+
+  // Reset state when round changes or phase changes
+  useEffect(() => {
+    if (isMultiplayer && multiplayerGameState?.phase === 'input') {
+      setStrategy('');
+      setSubmitted(false);
+    }
+  }, [isMultiplayer, multiplayerGameState?.currentRound, multiplayerGameState?.phase]);
+
+  // Handle timer countdown for multiplayer games
+  useEffect(() => {
+    if (isMultiplayer && multiplayerGameState && setMultiplayerGameState && multiplayerGameState.timeLeft > 0) {
+      const timer = setInterval(() => {
+        setMultiplayerGameState(prev => ({
+          ...prev,
+          timeLeft: Math.max(0, prev.timeLeft - 1)
+        }));
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [isMultiplayer, multiplayerGameState?.currentRound, setMultiplayerGameState]);
+
+  // Check if all players have submitted and trigger progression
+  useEffect(() => {
+    if (isMultiplayer && multiplayerGameState && setMultiplayerGameState && players.length > 0) {
+      const allSubmitted = players.every(player => 
+        multiplayerGameState.playerSubmissions[player.id]?.submitted
+      );
+      
+      if (allSubmitted && multiplayerGameState.phase === 'input') {
+        // All players submitted, trigger analysis phase
+        setMultiplayerGameState({
+          ...multiplayerGameState,
+          phase: 'analyzing'
+        });
+      }
+    }
+  }, [isMultiplayer, multiplayerGameState?.playerSubmissions, players, setMultiplayerGameState]);
 
   // Update player typing status
   useEffect(() => {
-    if (isMultiplayer && myPlayerId && !submitted) {
+    if (isMultiplayer && myPlayerId && !submitted && setMultiplayerGameState && multiplayerGameState) {
       const isTyping = strategy.length > 0;
-      setGameState({
-        ...gameState,
+      setMultiplayerGameState({
+        ...multiplayerGameState,
         playerSubmissions: {
-          ...gameState.playerSubmissions,
+          ...multiplayerGameState.playerSubmissions,
           [myPlayerId]: {
-            ...gameState.playerSubmissions[myPlayerId],
+            ...multiplayerGameState.playerSubmissions[myPlayerId],
             isTyping
           }
         }
       });
     }
-  }, [strategy, isMultiplayer, myPlayerId, submitted]);
+  }, [strategy, isMultiplayer, myPlayerId, submitted, setMultiplayerGameState, multiplayerGameState]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (strategy.trim() && !submitted) {
       setSubmitted(true);
       
-      if (isMultiplayer && myPlayerId) {
+      if (isMultiplayer && myPlayerId && setMultiplayerGameState && multiplayerGameState) {
         // Update multiplayer state
-        setGameState({
-          ...gameState,
+        setMultiplayerGameState({
+          ...multiplayerGameState,
           playerSubmissions: {
-            ...gameState.playerSubmissions,
+            ...multiplayerGameState.playerSubmissions,
             [myPlayerId]: {
               strategy: strategy.trim(),
               submitted: true,
@@ -63,9 +105,10 @@ const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading, isMult
             }
           }
         });
+      } else {
+        // Single player - call the submit handler
+        onStrategySubmit(strategy.trim());
       }
-      
-      onStrategySubmit(strategy.trim());
     }
   };
 
@@ -73,26 +116,27 @@ const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading, isMult
     if (!submitted) {
       setSubmitted(true);
       
-      if (isMultiplayer && myPlayerId) {
+      if (isMultiplayer && myPlayerId && setMultiplayerGameState && multiplayerGameState) {
         // Update multiplayer state for timeout
-        setGameState({
-          ...gameState,
+        setMultiplayerGameState({
+          ...multiplayerGameState,
           playerSubmissions: {
-            ...gameState.playerSubmissions,
+            ...multiplayerGameState.playerSubmissions,
             [myPlayerId]: {
-              strategy: '',
+              strategy: strategy.trim(),
               submitted: true,
               timeUp: true,
               isTyping: false
             }
           }
         });
-      }
-      
-      if (strategy.trim()) {
-        onStrategySubmit(strategy.trim());
       } else {
-        onStrategySubmit('Time ran out! You panicked and couldn\'t form a strategy.');
+        // Single player - call the submit handler
+        if (strategy.trim()) {
+          onStrategySubmit(strategy.trim());
+        } else {
+          onStrategySubmit('Time ran out! You panicked and couldn\'t form a strategy.');
+        }
       }
     }
   };
@@ -100,9 +144,11 @@ const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading, isMult
   // Calculate submission progress
   const getSubmissionProgress = () => {
     const totalPlayers = players.length;
-    const submittedCount = Object.values(gameState.playerSubmissions).filter(
-      (sub: any) => sub?.submitted
-    ).length;
+    const submittedCount = multiplayerGameState?.playerSubmissions 
+      ? Object.values(multiplayerGameState.playerSubmissions).filter(
+          (sub: any) => sub?.submitted
+        ).length
+      : 0;
     return { submitted: submittedCount, total: totalPlayers };
   };
 
@@ -126,7 +172,7 @@ const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading, isMult
           duration={60} 
           onTimeUp={handleTimeUp} 
           isActive={!submitted && !isLoading}
-          syncedTimeLeft={isMultiplayer ? gameState.timeLeft : undefined}
+          syncedTimeLeft={isMultiplayer ? multiplayerGameState?.timeLeft : undefined}
         />
       </div>
 
@@ -135,7 +181,7 @@ const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading, isMult
           <h3 className="font-semibold mb-2">Player Progress ({submittedCount}/{totalPlayers})</h3>
           <div className="space-y-1">
             {players.map((player) => {
-              const playerSub = gameState.playerSubmissions[player.id];
+              const playerSub = multiplayerGameState?.playerSubmissions?.[player.id];
               const playerName = player.getProfile()?.name || `Player ${player.id}`;
               
               let status = '⏳ Writing...';
