@@ -285,7 +285,7 @@ const Index = ({
             roundNumber={currentRound}
             onStrategySubmit={handleStrategySubmit}
             isLoading={isLoading}
-            isMultiplayer={gameMode === 'single' && multiplayerGameState.phase === 'input'}
+            isMultiplayer={gameMode === 'single' && multiplayerGameState?.phase === 'input'}
             multiplayerGameState={multiplayerGameState}
             setMultiplayerGameState={setMultiplayerGameState}
             players={players}
