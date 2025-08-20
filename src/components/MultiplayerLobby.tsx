@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { usePlayersList, useIsHost, useMultiplayerState, myPlayer } from 'playroomkit';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -7,33 +6,16 @@ interface MultiplayerLobbyProps {
   roomCode: string;
   onStartGame: (apiKey: string) => void;
   onLeaveRoom: () => void;
+  players: any[];
+  isHost: boolean;
 }
 
-const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLobbyProps) => {
+const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom, players, isHost }: MultiplayerLobbyProps) => {
   const [hostApiKey, setHostApiKey] = useState('');
-  const players = usePlayersList(true);
-  const isHost = useIsHost();
-  const [gameState, setGameState] = useMultiplayerState('game', {
-    phase: 'lobby',
-    currentRound: 1,
-    scenario: '',
-    hostApiKey: ''
-  });
-
-  // Auto-start game for all players when host starts
-  useEffect(() => {
-    if (gameState.phase === 'game' && gameState.hostApiKey) {
-      onStartGame(gameState.hostApiKey);
-    }
-  }, [gameState.phase, gameState.hostApiKey, onStartGame]);
 
   const handleStartGame = () => {
     if (hostApiKey.trim() && players.length >= 2) {
-      setGameState({
-        ...gameState,
-        hostApiKey,
-        phase: 'game'
-      });
+      onStartGame(hostApiKey);
     }
   };
 
@@ -56,9 +38,7 @@ const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLob
                 <span className="text-card-foreground">
                   {player.getProfile()?.name || `Player ${player.id.slice(0, 4)}`}
                 </span>
-                {player.id === myPlayer()?.id && (
-                  <span className="text-xs text-muted-foreground">(You)</span>
-                )}
+                <span className="text-xs text-muted-foreground">(Player)</span>
                 {players.findIndex(p => p.id === player.id) === 0 && (
                   <span className="text-xs text-primary font-medium">(Host)</span>
                 )}

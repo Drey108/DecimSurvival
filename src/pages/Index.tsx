@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { insertCoin, useMultiplayerState, useIsHost, myPlayer, usePlayersList } from 'playroomkit';
+import { useState, useEffect } from 'react';
+import { insertCoin } from 'playroomkit';
 import APIKeyModal from '../components/APIKeyModal';
 import GameScreen from '../components/GameScreen';
 import ResultDisplay from '../components/ResultDisplay';
@@ -19,7 +19,21 @@ const scenarios = [
   "Building fire on 15th floor. Elevators down, stairs blocked by smoke. How do you escape?"
 ];
 
-const Index = () => {
+interface IndexProps {
+  multiplayerGameState: any;
+  setMultiplayerGameState: (state: any) => void;
+  players: any[];
+  currentPlayer: any;
+  isHost: boolean;
+}
+
+const Index = ({ 
+  multiplayerGameState, 
+  setMultiplayerGameState, 
+  players, 
+  currentPlayer, 
+  isHost 
+}: IndexProps) => {
   const [gameMode, setGameMode] = useState<GameMode>('menu');
   const [gameState, setGameState] = useState<GameState>('setup');
   const [apiKey, setApiKey] = useState('');
@@ -32,15 +46,6 @@ const Index = () => {
   // Multiplayer state
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
-  const [multiplayerState, setMultiplayerState] = useMultiplayerState('game', {
-    phase: 'lobby',
-    currentRound: 1,
-    scenario: '',
-    hostApiKey: '',
-    timeLeft: 60,
-    playerSubmissions: {}
-  });
-  const isHost = useIsHost();
 
   const { analyzeStrategy, isLoading } = useGroqAPI(apiKey);
 
@@ -82,12 +87,11 @@ const Index = () => {
       });
       
       // Set player profile name
-      const me = myPlayer();
-      if (me) {
-        me.setState('profile', { name: playerName.trim() });
+      if (currentPlayer) {
+        currentPlayer.setState('profile', { name: playerName.trim() });
       }
       
-      setMultiplayerState({
+      setMultiplayerGameState({
         phase: 'lobby',
         currentRound: 1,
         scenario: '',
@@ -116,9 +120,8 @@ const Index = () => {
       });
       
       // Set player profile name
-      const me = myPlayer();
-      if (me) {
-        me.setState('profile', { name: playerName.trim() });
+      if (currentPlayer) {
+        currentPlayer.setState('profile', { name: playerName.trim() });
       }
       
       setGameMode('lobby');
@@ -138,7 +141,6 @@ const Index = () => {
     setCurrentScenario(randomScenario);
     
     // Initialize multiplayer game state with timer and empty submissions
-    const players = usePlayersList(true);
     const initialSubmissions = {};
     players.forEach(player => {
       initialSubmissions[player.id] = {
@@ -150,35 +152,16 @@ const Index = () => {
     });
     
     const newState = {
-      ...multiplayerState,
+      ...multiplayerGameState,
       hostApiKey,
       phase: 'input',
       scenario: randomScenario,
       timeLeft: 60,
       playerSubmissions: initialSubmissions
     };
-    setMultiplayerState(newState);
+    setMultiplayerGameState(newState);
     setGameMode('single'); // Reuse single player game screen
     setGameState('playing');
-    
-    // Start synced timer for all players
-    let currentTimeLeft = 60;
-    const timerInterval = setInterval(() => {
-      currentTimeLeft--;
-      if (currentTimeLeft <= 0) {
-        clearInterval(timerInterval);
-        setMultiplayerState({
-          ...newState,
-          timeLeft: 0,
-          phase: 'waiting'
-        });
-      } else {
-        setMultiplayerState({
-          ...newState,
-          timeLeft: currentTimeLeft
-        });
-      }
-    }, 1000);
   };
 
   // Single player handlers
@@ -261,6 +244,8 @@ const Index = () => {
             roomCode={roomCode}
             onStartGame={handleMultiplayerStartGame}
             onLeaveRoom={handleLeaveRoom}
+            players={players}
+            isHost={isHost}
           />
         )}
 
@@ -300,7 +285,11 @@ const Index = () => {
             roundNumber={currentRound}
             onStrategySubmit={handleStrategySubmit}
             isLoading={isLoading}
-            isMultiplayer={gameMode === 'single' && multiplayerState.phase === 'input'}
+            isMultiplayer={gameMode === 'single' && multiplayerGameState.phase === 'input'}
+            multiplayerGameState={multiplayerGameState}
+            setMultiplayerGameState={setMultiplayerGameState}
+            players={players}
+            currentPlayer={currentPlayer}
           />
         )}
 
