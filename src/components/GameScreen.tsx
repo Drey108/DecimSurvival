@@ -30,6 +30,14 @@ const GameScreen = ({
 
   const myPlayerId = currentPlayer?.id;
 
+  // Reset state when round changes or phase changes
+  useEffect(() => {
+    if (isMultiplayer && multiplayerGameState?.phase === 'input') {
+      setStrategy('');
+      setSubmitted(false);
+    }
+  }, [isMultiplayer, multiplayerGameState?.currentRound, multiplayerGameState?.phase]);
+
   // Handle timer countdown for multiplayer games
   useEffect(() => {
     if (isMultiplayer && multiplayerGameState && setMultiplayerGameState && multiplayerGameState.timeLeft > 0) {
@@ -43,6 +51,23 @@ const GameScreen = ({
       return () => clearInterval(timer);
     }
   }, [isMultiplayer, multiplayerGameState?.currentRound, setMultiplayerGameState]);
+
+  // Check if all players have submitted and trigger progression
+  useEffect(() => {
+    if (isMultiplayer && multiplayerGameState && setMultiplayerGameState && players.length > 0) {
+      const allSubmitted = players.every(player => 
+        multiplayerGameState.playerSubmissions[player.id]?.submitted
+      );
+      
+      if (allSubmitted && multiplayerGameState.phase === 'input') {
+        // All players submitted, trigger analysis phase
+        setMultiplayerGameState({
+          ...multiplayerGameState,
+          phase: 'analyzing'
+        });
+      }
+    }
+  }, [isMultiplayer, multiplayerGameState?.playerSubmissions, players, setMultiplayerGameState]);
 
   // Update player typing status
   useEffect(() => {
@@ -80,9 +105,10 @@ const GameScreen = ({
             }
           }
         });
+      } else {
+        // Single player - call the submit handler
+        onStrategySubmit(strategy.trim());
       }
-      
-      onStrategySubmit(strategy.trim());
     }
   };
 
@@ -97,19 +123,20 @@ const GameScreen = ({
           playerSubmissions: {
             ...multiplayerGameState.playerSubmissions,
             [myPlayerId]: {
-              strategy: '',
+              strategy: strategy.trim(),
               submitted: true,
               timeUp: true,
               isTyping: false
             }
           }
         });
-      }
-      
-      if (strategy.trim()) {
-        onStrategySubmit(strategy.trim());
       } else {
-        onStrategySubmit('Time ran out! You panicked and couldn\'t form a strategy.');
+        // Single player - call the submit handler
+        if (strategy.trim()) {
+          onStrategySubmit(strategy.trim());
+        } else {
+          onStrategySubmit('Time ran out! You panicked and couldn\'t form a strategy.');
+        }
       }
     }
   };
