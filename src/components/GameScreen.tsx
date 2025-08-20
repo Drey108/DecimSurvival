@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useMultiplayerState, usePlayersList, myPlayer } from 'playroomkit';
 import Timer from './Timer';
 import ScenarioDisplay from './ScenarioDisplay';
 
@@ -8,26 +9,62 @@ interface GameScreenProps {
   onStrategySubmit: (strategy: string) => void;
   isLoading: boolean;
   isMultiplayer?: boolean;
-  playerProgress?: {
-    submitted: number;
-    total: number;
-    players: Array<{
-      id: string;
-      name: string;
-      status: string;
-    }>;
-  };
-  syncedTimeLeft?: number;
 }
 
-const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading, isMultiplayer = false, playerProgress, syncedTimeLeft }: GameScreenProps) => {
+const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading, isMultiplayer = false }: GameScreenProps) => {
   const [strategy, setStrategy] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const players = usePlayersList(true);
+  
+  const [gameState, setGameState] = useMultiplayerState('game', {
+    phase: 'input',
+    currentRound: 1,
+    scenario: '',
+    timeLeft: 60,
+    playerSubmissions: {},
+    hostApiKey: ''
+  });
+
+  const myPlayerId = myPlayer()?.id;
+
+  // Update player typing status
+  useEffect(() => {
+    if (isMultiplayer && myPlayerId && !submitted) {
+      const isTyping = strategy.length > 0;
+      setGameState({
+        ...gameState,
+        playerSubmissions: {
+          ...gameState.playerSubmissions,
+          [myPlayerId]: {
+            ...gameState.playerSubmissions[myPlayerId],
+            isTyping
+          }
+        }
+      });
+    }
+  }, [strategy, isMultiplayer, myPlayerId, submitted]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (strategy.trim() && !submitted) {
       setSubmitted(true);
+      
+      if (isMultiplayer && myPlayerId) {
+        // Update multiplayer state
+        setGameState({
+          ...gameState,
+          playerSubmissions: {
+            ...gameState.playerSubmissions,
+            [myPlayerId]: {
+              strategy: strategy.trim(),
+              submitted: true,
+              timeUp: false,
+              isTyping: false
+            }
+          }
+        });
+      }
+      
       onStrategySubmit(strategy.trim());
     }
   };
@@ -35,6 +72,23 @@ const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading, isMult
   const handleTimeUp = () => {
     if (!submitted) {
       setSubmitted(true);
+      
+      if (isMultiplayer && myPlayerId) {
+        // Update multiplayer state for timeout
+        setGameState({
+          ...gameState,
+          playerSubmissions: {
+            ...gameState.playerSubmissions,
+            [myPlayerId]: {
+              strategy: '',
+              submitted: true,
+              timeUp: true,
+              isTyping: false
+            }
+          }
+        });
+      }
+      
       if (strategy.trim()) {
         onStrategySubmit(strategy.trim());
       } else {
@@ -42,6 +96,17 @@ const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading, isMult
       }
     }
   };
+
+  // Calculate submission progress
+  const getSubmissionProgress = () => {
+    const totalPlayers = players.length;
+    const submittedCount = Object.values(gameState.playerSubmissions).filter(
+      (sub: any) => sub?.submitted
+    ).length;
+    return { submitted: submittedCount, total: totalPlayers };
+  };
+
+  const { submitted: submittedCount, total: totalPlayers } = getSubmissionProgress();
 
   if (isLoading) {
     return (
@@ -61,23 +126,35 @@ const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading, isMult
           duration={60} 
           onTimeUp={handleTimeUp} 
           isActive={!submitted && !isLoading}
-          syncedTimeLeft={syncedTimeLeft}
+          syncedTimeLeft={isMultiplayer ? gameState.timeLeft : undefined}
         />
       </div>
 
-      {isMultiplayer && playerProgress && (
+      {isMultiplayer && (
         <div className="mb-4 p-4 bg-card border border-border rounded">
-          <h3 className="font-semibold mb-2">Player Progress ({playerProgress.submitted}/{playerProgress.total})</h3>
+          <h3 className="font-semibold mb-2">Player Progress ({submittedCount}/{totalPlayers})</h3>
           <div className="space-y-1">
-            {playerProgress.players.map((player) => (
-              <div key={player.id} className="flex justify-between text-sm">
-                <span>{player.name}</span>
-                <span>{player.status}</span>
-              </div>
-            ))}
+            {players.map((player) => {
+              const playerSub = gameState.playerSubmissions[player.id];
+              const playerName = player.getProfile()?.name || `Player ${player.id}`;
+              
+              let status = '⏳ Writing...';
+              if (playerSub?.submitted) {
+                status = playerSub.timeUp ? '⏰ Time Up' : '✅ Submitted';
+              } else if (playerSub?.isTyping) {
+                status = '✏️ Typing...';
+              }
+              
+              return (
+                <div key={player.id} className="flex justify-between text-sm">
+                  <span>{playerName}</span>
+                  <span>{status}</span>
+                </div>
+              );
+            })}
           </div>
           
-          {playerProgress.submitted < playerProgress.total && (
+          {submittedCount < totalPlayers && (
             <p className="text-sm text-muted-foreground mt-2">
               Waiting for all players to submit...
             </p>
