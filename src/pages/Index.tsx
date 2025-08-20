@@ -36,9 +36,7 @@ const Index = () => {
     phase: 'lobby',
     currentRound: 1,
     scenario: '',
-    hostApiKey: '',
-    timeLeft: 60,
-    playerSubmissions: {}
+    hostApiKey: ''
   });
   const isHost = useIsHost();
 
@@ -91,9 +89,7 @@ const Index = () => {
         phase: 'lobby',
         currentRound: 1,
         scenario: '',
-        hostApiKey: '',
-        timeLeft: 60,
-        playerSubmissions: {}
+        hostApiKey: ''
       });
       setGameMode('lobby');
     } catch (error) {
@@ -136,49 +132,8 @@ const Index = () => {
     setApiKey(hostApiKey);
     const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
     setCurrentScenario(randomScenario);
-    
-    // Initialize multiplayer game state with timer and empty submissions
-    const players = usePlayersList(true);
-    const initialSubmissions = {};
-    players.forEach(player => {
-      initialSubmissions[player.id] = {
-        strategy: '',
-        submitted: false,
-        timeUp: false,
-        isTyping: false
-      };
-    });
-    
-    const newState = {
-      ...multiplayerState,
-      hostApiKey,
-      phase: 'input',
-      scenario: randomScenario,
-      timeLeft: 60,
-      playerSubmissions: initialSubmissions
-    };
-    setMultiplayerState(newState);
     setGameMode('single'); // Reuse single player game screen
     setGameState('playing');
-    
-    // Start synced timer for all players
-    let currentTimeLeft = 60;
-    const timerInterval = setInterval(() => {
-      currentTimeLeft--;
-      if (currentTimeLeft <= 0) {
-        clearInterval(timerInterval);
-        setMultiplayerState({
-          ...newState,
-          timeLeft: 0,
-          phase: 'waiting'
-        });
-      } else {
-        setMultiplayerState({
-          ...newState,
-          timeLeft: currentTimeLeft
-        });
-      }
-    }, 1000);
   };
 
   // Single player handlers
@@ -300,7 +255,6 @@ const Index = () => {
             roundNumber={currentRound}
             onStrategySubmit={handleStrategySubmit}
             isLoading={isLoading}
-            isMultiplayer={gameMode === 'single' && multiplayerState.phase === 'input'}
           />
         )}
 
