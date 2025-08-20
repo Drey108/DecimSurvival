@@ -6,6 +6,7 @@ import ResultDisplay from '../components/ResultDisplay';
 import ModeSelector from '../components/ModeSelector';
 import RoomSetup from '../components/RoomSetup';
 import MultiplayerLobby from '../components/MultiplayerLobby';
+import ConnectionWarning from '../components/ConnectionWarning';
 import { useGroqAPI } from '../hooks/useGroqAPI';
 
 type GameMode = 'menu' | 'single' | 'multi-setup' | 'lobby';
@@ -46,6 +47,7 @@ const Index = ({
   // Multiplayer state
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
+  const [showConnectionWarning, setShowConnectionWarning] = useState(false);
 
   const { analyzeStrategy, isLoading } = useGroqAPI(apiKey);
 
@@ -102,6 +104,7 @@ const Index = ({
       setGameMode('lobby');
     } catch (error) {
       setError('Failed to create room');
+      setShowConnectionWarning(true);
     }
   };
 
@@ -127,6 +130,7 @@ const Index = ({
       setGameMode('lobby');
     } catch (error) {
       setError('Failed to join room');
+      setShowConnectionWarning(true);
     }
   };
 
@@ -224,6 +228,11 @@ const Index = ({
           <h1 className="text-4xl font-bold text-foreground mb-2">DECIM</h1>
           <p className="text-muted-foreground">Survival Game</p>
         </header>
+
+        <ConnectionWarning 
+          show={showConnectionWarning} 
+          onDismiss={() => setShowConnectionWarning(false)} 
+        />
 
         {gameMode === 'menu' && (
           <ModeSelector onSelectMode={handleModeSelect} />
