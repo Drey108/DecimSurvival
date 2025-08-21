@@ -55,19 +55,24 @@ const Index = ({
   useEffect(() => {
     if (!currentPlayer) return;
 
-    // Listen for game state updates from other players (especially host)
-    const unsubscribe = currentPlayer.onStateChange('gameState', (gameState: any) => {
-      if (gameState && gameState.phase === 'playing') {
+    // Listen for game state updates using PlayroomKit's state management
+    const checkGameState = () => {
+      const gameState = currentPlayer.getState('gameState');
+      if (gameState && gameState.phase === 'playing' && gameMode === 'lobby') {
         setMultiplayerGameState(gameState);
         setCurrentScenario(gameState.scenario);
         setApiKey(gameState.hostApiKey);
         setGameMode('single');
         setGameState('playing');
       }
-    });
+    };
 
-    return unsubscribe;
-  }, [currentPlayer, setMultiplayerGameState]);
+    // Check initially and set up polling
+    checkGameState();
+    const interval = setInterval(checkGameState, 500);
+
+    return () => clearInterval(interval);
+  }, [currentPlayer, gameMode, setMultiplayerGameState]);
 
   // Mode selection handlers
   const handleModeSelect = (mode: 'single' | 'multiplayer') => {
