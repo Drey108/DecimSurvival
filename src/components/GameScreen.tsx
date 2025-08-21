@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Timer from './Timer';
+
 import ScenarioDisplay from './ScenarioDisplay';
 
 interface GameScreenProps {
@@ -30,19 +30,6 @@ const GameScreen = ({
 
   const myPlayerId = currentPlayer?.id;
 
-  // Handle timer countdown for multiplayer games
-  useEffect(() => {
-    if (isMultiplayer && multiplayerGameState && setMultiplayerGameState && multiplayerGameState.timeLeft > 0) {
-      const timer = setInterval(() => {
-        setMultiplayerGameState(prev => ({
-          ...prev,
-          timeLeft: Math.max(0, prev.timeLeft - 1)
-        }));
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-  }, [isMultiplayer, multiplayerGameState?.currentRound, setMultiplayerGameState]);
 
   // Update player typing status
   useEffect(() => {
@@ -86,33 +73,6 @@ const GameScreen = ({
     }
   };
 
-  const handleTimeUp = () => {
-    if (!submitted) {
-      setSubmitted(true);
-      
-      if (isMultiplayer && myPlayerId && setMultiplayerGameState && multiplayerGameState) {
-        // Update multiplayer state for timeout
-        setMultiplayerGameState({
-          ...multiplayerGameState,
-          playerSubmissions: {
-            ...multiplayerGameState.playerSubmissions,
-            [myPlayerId]: {
-              strategy: '',
-              submitted: true,
-              timeUp: true,
-              isTyping: false
-            }
-          }
-        });
-      }
-      
-      if (strategy.trim()) {
-        onStrategySubmit(strategy.trim());
-      } else {
-        onStrategySubmit('Time ran out! You panicked and couldn\'t form a strategy.');
-      }
-    }
-  };
 
   // Calculate submission progress
   const getSubmissionProgress = () => {
@@ -140,14 +100,6 @@ const GameScreen = ({
     <div>
       <ScenarioDisplay scenario={scenario} roundNumber={roundNumber} />
       
-      <div className="mb-4">
-        <Timer 
-          duration={60} 
-          onTimeUp={handleTimeUp} 
-          isActive={!submitted && !isLoading}
-          syncedTimeLeft={isMultiplayer ? multiplayerGameState?.timeLeft : undefined}
-        />
-      </div>
 
       {isMultiplayer && (
         <div className="mb-4 p-4 bg-card border border-border rounded">

@@ -51,6 +51,24 @@ const Index = ({
 
   const { analyzeStrategy, isLoading } = useGroqAPI(apiKey);
 
+  // Listen for multiplayer game state changes
+  useEffect(() => {
+    if (!currentPlayer) return;
+
+    // Listen for game state updates from other players (especially host)
+    const unsubscribe = currentPlayer.onStateChange('gameState', (gameState: any) => {
+      if (gameState && gameState.phase === 'playing') {
+        setMultiplayerGameState(gameState);
+        setCurrentScenario(gameState.scenario);
+        setApiKey(gameState.hostApiKey);
+        setGameMode('single');
+        setGameState('playing');
+      }
+    });
+
+    return unsubscribe;
+  }, [currentPlayer, setMultiplayerGameState]);
+
   // Mode selection handlers
   const handleModeSelect = (mode: 'single' | 'multiplayer') => {
     if (mode === 'single') {
@@ -144,7 +162,7 @@ const Index = ({
     const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
     setCurrentScenario(randomScenario);
     
-    // Initialize multiplayer game state with timer and empty submissions
+    // Initialize multiplayer game state and sync to all players
     const initialSubmissions = {};
     players.forEach(player => {
       initialSubmissions[player.id] = {
@@ -156,13 +174,18 @@ const Index = ({
     });
     
     const newState = {
-      ...multiplayerGameState,
-      hostApiKey,
-      phase: 'input',
+      phase: 'playing',
       scenario: randomScenario,
-      timeLeft: 60,
-      playerSubmissions: initialSubmissions
+      currentRound: 1,
+      playerSubmissions: initialSubmissions,
+      hostApiKey
     };
+    
+    // Use PlayroomKit's shared state to sync game state across all players
+    if (currentPlayer) {
+      currentPlayer.setState('gameState', newState, true); // true = reliable transmission
+    }
+    
     setMultiplayerGameState(newState);
     setGameMode('single'); // Reuse single player game screen
     setGameState('playing');
