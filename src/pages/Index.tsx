@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react';
-import { insertCoin } from 'playroomkit';
+import { useState } from 'react';
+import { insertCoin, useMultiplayerState, useIsHost, myPlayer } from 'playroomkit';
 import APIKeyModal from '../components/APIKeyModal';
 import GameScreen from '../components/GameScreen';
 import ResultDisplay from '../components/ResultDisplay';
 import ModeSelector from '../components/ModeSelector';
 import RoomSetup from '../components/RoomSetup';
 import MultiplayerLobby from '../components/MultiplayerLobby';
-import ConnectionWarning from '../components/ConnectionWarning';
 import { useGroqAPI } from '../hooks/useGroqAPI';
 
 type GameMode = 'menu' | 'single' | 'multi-setup' | 'lobby';
@@ -20,21 +19,7 @@ const scenarios = [
   "Building fire on 15th floor. Elevators down, stairs blocked by smoke. How do you escape?"
 ];
 
-interface IndexProps {
-  multiplayerGameState: any;
-  setMultiplayerGameState: (state: any) => void;
-  players: any[];
-  currentPlayer: any;
-  isHost: boolean;
-}
-
-const Index = ({ 
-  multiplayerGameState, 
-  setMultiplayerGameState, 
-  players, 
-  currentPlayer, 
-  isHost 
-}: IndexProps) => {
+const Index = () => {
   const [gameMode, setGameMode] = useState<GameMode>('menu');
   const [gameState, setGameState] = useState<GameState>('setup');
   const [apiKey, setApiKey] = useState('');
@@ -47,32 +32,15 @@ const Index = ({
   // Multiplayer state
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
-  const [showConnectionWarning, setShowConnectionWarning] = useState(false);
+  const [multiplayerState, setMultiplayerState] = useMultiplayerState('game', {
+    phase: 'lobby',
+    currentRound: 1,
+    scenario: '',
+    hostApiKey: ''
+  });
+  const isHost = useIsHost();
 
   const { analyzeStrategy, isLoading } = useGroqAPI(apiKey);
-
-  // Listen for multiplayer game state changes
-  useEffect(() => {
-    if (!currentPlayer) return;
-
-    // Listen for game state updates using PlayroomKit's state management
-    const checkGameState = () => {
-      const gameState = currentPlayer.getState('gameState');
-      if (gameState && gameState.phase === 'playing' && gameMode === 'lobby') {
-        setMultiplayerGameState(gameState);
-        setCurrentScenario(gameState.scenario);
-        setApiKey(gameState.hostApiKey);
-        setGameMode('single');
-        setGameState('playing');
-      }
-    };
-
-    // Check initially and set up polling
-    checkGameState();
-    const interval = setInterval(checkGameState, 500);
-
-    return () => clearInterval(interval);
-  }, [currentPlayer, gameMode, setMultiplayerGameState]);
 
   // Mode selection handlers
   const handleModeSelect = (mode: 'single' | 'multiplayer') => {
@@ -112,22 +80,20 @@ const Index = ({
       });
       
       // Set player profile name
-      if (currentPlayer) {
-        currentPlayer.setState('profile', { name: playerName.trim() });
+      const me = myPlayer();
+      if (me) {
+        me.setState('profile', { name: playerName.trim() });
       }
       
-      setMultiplayerGameState({
+      setMultiplayerState({
         phase: 'lobby',
         currentRound: 1,
         scenario: '',
-        hostApiKey: '',
-        timeLeft: 60,
-        playerSubmissions: {}
+        hostApiKey: ''
       });
       setGameMode('lobby');
     } catch (error) {
       setError('Failed to create room');
-      setShowConnectionWarning(true);
     }
   };
 
@@ -146,14 +112,14 @@ const Index = ({
       });
       
       // Set player profile name
-      if (currentPlayer) {
-        currentPlayer.setState('profile', { name: playerName.trim() });
+      const me = myPlayer();
+      if (me) {
+        me.setState('profile', { name: playerName.trim() });
       }
       
       setGameMode('lobby');
     } catch (error) {
       setError('Failed to join room');
-      setShowConnectionWarning(true);
     }
   };
 
@@ -166,32 +132,12 @@ const Index = ({
     setApiKey(hostApiKey);
     const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
     setCurrentScenario(randomScenario);
-    
-    // Initialize multiplayer game state and sync to all players
-    const initialSubmissions = {};
-    players.forEach(player => {
-      initialSubmissions[player.id] = {
-        strategy: '',
-        submitted: false,
-        timeUp: false,
-        isTyping: false
-      };
+    setMultiplayerState({
+      ...multiplayerState,
+      hostApiKey,
+      phase: 'game',
+      scenario: randomScenario
     });
-    
-    const newState = {
-      phase: 'playing',
-      scenario: randomScenario,
-      currentRound: 1,
-      playerSubmissions: initialSubmissions,
-      hostApiKey
-    };
-    
-    // Use PlayroomKit's shared state to sync game state across all players
-    if (currentPlayer) {
-      currentPlayer.setState('gameState', newState, true); // true = reliable transmission
-    }
-    
-    setMultiplayerGameState(newState);
     setGameMode('single'); // Reuse single player game screen
     setGameState('playing');
   };
@@ -257,11 +203,6 @@ const Index = ({
           <p className="text-muted-foreground">Survival Game</p>
         </header>
 
-        <ConnectionWarning 
-          show={showConnectionWarning} 
-          onDismiss={() => setShowConnectionWarning(false)} 
-        />
-
         {gameMode === 'menu' && (
           <ModeSelector onSelectMode={handleModeSelect} />
         )}
@@ -281,8 +222,6 @@ const Index = ({
             roomCode={roomCode}
             onStartGame={handleMultiplayerStartGame}
             onLeaveRoom={handleLeaveRoom}
-            players={players}
-            isHost={isHost}
           />
         )}
 
@@ -322,11 +261,6 @@ const Index = ({
             roundNumber={currentRound}
             onStrategySubmit={handleStrategySubmit}
             isLoading={isLoading}
-            isMultiplayer={gameMode === 'single' && multiplayerGameState?.phase === 'input'}
-            multiplayerGameState={multiplayerGameState}
-            setMultiplayerGameState={setMultiplayerGameState}
-            players={players}
-            currentPlayer={currentPlayer}
           />
         )}
 
