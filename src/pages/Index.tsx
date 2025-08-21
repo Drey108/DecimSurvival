@@ -32,13 +32,23 @@ const Index = () => {
   // Multiplayer state
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
-  const [multiplayerState, setMultiplayerState] = useMultiplayerState('game', {
-    phase: 'lobby',
-    currentRound: 1,
-    scenario: '',
-    hostApiKey: ''
-  });
-  const isHost = useIsHost();
+  
+  // Initialize multiplayer state with error handling
+  let multiplayerState, setMultiplayerState, isHost;
+  try {
+    [multiplayerState, setMultiplayerState] = useMultiplayerState('game', {
+      phase: 'lobby',
+      currentRound: 1,
+      scenario: '',
+      hostApiKey: ''
+    });
+    isHost = useIsHost();
+  } catch (e) {
+    // Fallback to default values if multiplayer fails
+    multiplayerState = { phase: 'lobby', currentRound: 1, scenario: '', hostApiKey: '' };
+    setMultiplayerState = () => {};
+    isHost = false;
+  }
 
   const { analyzeStrategy, isLoading } = useGroqAPI(apiKey);
 
