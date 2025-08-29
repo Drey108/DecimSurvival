@@ -182,11 +182,14 @@ const Index = () => {
     setApiKey(hostApiKey);
     const scenario = scenarios[multiplayerState.currentRound - 1] || scenarios[0];
     setCurrentScenario(scenario);
+    const roundEndTime = Date.now() + 60000; // 60 seconds from now
     setMultiplayerState({
       ...multiplayerState,
       hostApiKey,
       phase: 'collectingSubmissions',
-      scenario
+      scenario,
+      roundEndTime,
+      playersDone: {}
     });
     setGameMode('multiplayer');
   };
@@ -307,14 +310,17 @@ const Index = () => {
     const scenario = scenarios[nextRound - 1];
     
     if (scenario && nextRound <= 3) {
+      const roundEndTime = Date.now() + 60000; // 60 seconds from now
       setCurrentScenario(scenario);
       setMultiplayerState({
         ...multiplayerState,
         phase: 'collectingSubmissions',
         currentRound: nextRound,
         scenario,
+        roundEndTime,
         submissions: {},
-        verdicts: {}
+        verdicts: {},
+        playersDone: {}
       });
     }
   };

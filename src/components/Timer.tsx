@@ -1,32 +1,44 @@
 import { useState, useEffect } from 'react';
+import { useMultiplayerState } from 'playroomkit';
 
 interface TimerProps {
-  duration: number;
   onTimeUp: () => void;
-  isActive: boolean;
 }
 
-const Timer = ({ duration, onTimeUp, isActive }: TimerProps) => {
-  const [timeLeft, setTimeLeft] = useState(duration);
+const Timer = ({ onTimeUp }: TimerProps) => {
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [gameState] = useMultiplayerState('game', {
+    phase: 'collectingSubmissions',
+    currentRound: 1,
+    scenario: '',
+    hostApiKey: '',
+    submissions: {},
+    verdicts: {},
+    scores: {},
+    playerNames: {},
+    leaderboard: [],
+    roundEndTime: 0,
+    playersDone: {}
+  });
 
   useEffect(() => {
-    setTimeLeft(duration);
-  }, [duration]);
+    const updateTimer = () => {
+      if (!gameState.roundEndTime) return;
+      
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((gameState.roundEndTime - now) / 1000));
+      setTimeLeft(remaining);
+      
+      if (remaining === 0) {
+        onTimeUp();
+      }
+    };
 
-  useEffect(() => {
-    if (!isActive) return;
-
-    if (timeLeft <= 0) {
-      onTimeUp();
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setTimeLeft(timeLeft - 1);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [timeLeft, isActive, onTimeUp]);
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    
+    return () => clearInterval(interval);
+  }, [gameState.roundEndTime, onTimeUp]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
