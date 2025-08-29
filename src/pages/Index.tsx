@@ -1,10 +1,7 @@
-import { useState, useEffect } from 'react';
-import { insertCoin, useMultiplayerState, useIsHost, myPlayer, usePlayersList } from 'playroomkit';
+import { useState } from 'react';
+import { insertCoin, useMultiplayerState, useIsHost, myPlayer } from 'playroomkit';
 import APIKeyModal from '../components/APIKeyModal';
 import GameScreen from '../components/GameScreen';
-import MultiplayerGameScreen from '../components/MultiplayerGameScreen';
-import MultiplayerVerdicts from '../components/MultiplayerVerdicts';
-import MultiplayerLeaderboard from '../components/MultiplayerLeaderboard';
 import ResultDisplay from '../components/ResultDisplay';
 import ModeSelector from '../components/ModeSelector';
 import RoomSetup from '../components/RoomSetup';
@@ -13,7 +10,6 @@ import { useGroqAPI } from '../hooks/useGroqAPI';
 
 type GameMode = 'menu' | 'single' | 'multi-setup' | 'lobby';
 type GameState = 'setup' | 'playing' | 'result' | 'finished';
-type MultiplayerPhase = 'lobby' | 'collectingSubmissions' | 'evaluating' | 'showingVerdicts' | 'showingLeaderboard';
 
 const scenarios = [
   "Zombie outbreak in shopping mall. You're trapped with limited supplies. Survive 24 hours.",
@@ -38,33 +34,20 @@ const Index = () => {
   const [roomCode, setRoomCode] = useState('');
   
   // Initialize multiplayer state with error handling
-  let multiplayerState, setMultiplayerState, isHost, players;
+  let multiplayerState, setMultiplayerState, isHost;
   try {
     [multiplayerState, setMultiplayerState] = useMultiplayerState('game', {
-      phase: 'lobby' as MultiplayerPhase,
+      phase: 'lobby',
       currentRound: 1,
       scenario: '',
-      hostApiKey: '',
-      submissions: {} as Record<string, string>,
-      verdicts: {} as Record<string, { survived: boolean; narrative: string; score: number }>,
-      leaderboard: {} as Record<string, number>
+      hostApiKey: ''
     });
     isHost = useIsHost();
-    players = usePlayersList();
   } catch (e) {
     // Fallback to default values if multiplayer fails
-    multiplayerState = { 
-      phase: 'lobby' as MultiplayerPhase, 
-      currentRound: 1, 
-      scenario: '', 
-      hostApiKey: '', 
-      submissions: {}, 
-      verdicts: {}, 
-      leaderboard: {} 
-    };
+    multiplayerState = { phase: 'lobby', currentRound: 1, scenario: '', hostApiKey: '' };
     setMultiplayerState = () => {};
     isHost = false;
-    players = [];
   }
 
   const { analyzeStrategy, isLoading } = useGroqAPI(apiKey);
@@ -156,21 +139,16 @@ const Index = () => {
   };
 
   const handleMultiplayerStartGame = (hostApiKey: string) => {
-    if (!isHost) return;
-    
     setApiKey(hostApiKey);
-    const currentScenarioIndex = multiplayerState.currentRound - 1;
-    const selectedScenario = scenarios[currentScenarioIndex] || scenarios[0];
-    setCurrentScenario(selectedScenario);
-    
+    const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+    setCurrentScenario(randomScenario);
     setMultiplayerState({
       ...multiplayerState,
       hostApiKey,
-      phase: 'collectingSubmissions',
-      scenario: selectedScenario,
-      submissions: {},
-      verdicts: {}
+      phase: 'game',
+      scenario: randomScenario
     });
+    setGameMode('single'); // Reuse single player game screen
     setGameState('playing');
   };
 
@@ -190,124 +168,28 @@ const Index = () => {
   };
 
   const handleStrategySubmit = async (strategy: string) => {
-    if (gameMode === 'single') {
-      // Single player logic
-      try {
-        setError('');
-        const result = await analyzeStrategy(currentScenario, strategy);
-        setLastResult(result);
-        
-        if (result.survived) {
-          setScore(prev => prev + 1);
-        }
-        
-        setGameState('result');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to analyze strategy');
-      }
-    } else {
-      // Multiplayer logic - submit strategy to shared state
-      const me = myPlayer();
-      if (!me) return;
-      
-      const newSubmissions = {
-        ...multiplayerState.submissions,
-        [me.id]: strategy
-      };
-      
-      setMultiplayerState({
-        ...multiplayerState,
-        submissions: newSubmissions
-      });
-      
-      // Check if all players have submitted
-      if (Object.keys(newSubmissions).length === players.length && isHost) {
-        // Host evaluates all strategies
-        await evaluateAllStrategies(newSubmissions);
-      }
-    }
-  };
-
-  const evaluateAllStrategies = async (submissions: Record<string, string>) => {
-    if (!isHost) return;
-    
-    setMultiplayerState({
-      ...multiplayerState,
-      phase: 'evaluating'
-    });
-    
     try {
-      const verdicts: Record<string, { survived: boolean; narrative: string; score: number }> = {};
+      setError('');
+      const result = await analyzeStrategy(currentScenario, strategy);
+      setLastResult(result);
       
-      // Evaluate each player's strategy
-      for (const [playerId, strategy] of Object.entries(submissions)) {
-        const result = await analyzeStrategy(multiplayerState.scenario, strategy);
-        verdicts[playerId] = {
-          survived: result.survived,
-          narrative: result.narrative,
-          score: result.survived ? 1 : 0
-        };
+      if (result.survived) {
+        setScore(prev => prev + 1);
       }
       
-      // Update leaderboard
-      const newLeaderboard = { ...multiplayerState.leaderboard };
-      for (const [playerId, verdict] of Object.entries(verdicts)) {
-        newLeaderboard[playerId] = (newLeaderboard[playerId] || 0) + verdict.score;
-      }
-      
-      setMultiplayerState({
-        ...multiplayerState,
-        verdicts,
-        leaderboard: newLeaderboard,
-        phase: 'showingVerdicts'
-      });
+      setGameState('result');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to evaluate strategies');
+      setError(err instanceof Error ? err.message : 'Failed to analyze strategy');
     }
   };
 
   const handleContinue = () => {
-    if (gameMode === 'single') {
-      if (currentRound >= 3) {
-        setGameState('finished');
-      } else {
-        setCurrentRound(prev => prev + 1);
-        const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
-        setCurrentScenario(randomScenario);
-        setGameState('playing');
-      }
-    }
-  };
-
-  const handleShowLeaderboard = () => {
-    if (!isHost) return;
-    
-    setMultiplayerState({
-      ...multiplayerState,
-      phase: 'showingLeaderboard'
-    });
-  };
-
-  const handleNextRound = () => {
-    if (!isHost) return;
-    
-    if (multiplayerState.currentRound >= 3) {
+    if (currentRound >= 3) {
       setGameState('finished');
     } else {
-      const nextRound = multiplayerState.currentRound + 1;
-      const nextScenario = scenarios[nextRound - 1] || scenarios[0];
-      
-      setCurrentRound(nextRound);
-      setCurrentScenario(nextScenario);
-      
-      setMultiplayerState({
-        ...multiplayerState,
-        currentRound: nextRound,
-        scenario: nextScenario,
-        phase: 'collectingSubmissions',
-        submissions: {},
-        verdicts: {}
-      });
+      setCurrentRound(prev => prev + 1);
+      const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+      setCurrentScenario(randomScenario);
       setGameState('playing');
     }
   };
@@ -383,48 +265,12 @@ const Index = () => {
           </div>
         )}
 
-        {gameState === 'playing' && gameMode === 'single' && (
+        {gameState === 'playing' && (
           <GameScreen
             scenario={currentScenario}
             roundNumber={currentRound}
             onStrategySubmit={handleStrategySubmit}
             isLoading={isLoading}
-          />
-        )}
-
-        {gameState === 'playing' && gameMode === 'lobby' && multiplayerState.phase === 'collectingSubmissions' && (
-          <MultiplayerGameScreen
-            scenario={multiplayerState.scenario}
-            roundNumber={multiplayerState.currentRound}
-            onStrategySubmit={handleStrategySubmit}
-            submissions={multiplayerState.submissions}
-            phase={multiplayerState.phase}
-          />
-        )}
-
-        {gameMode === 'lobby' && multiplayerState.phase === 'evaluating' && (
-          <div className="text-center">
-            <div className="text-xl mb-4">AI is analyzing all strategies...</div>
-            <div className="text-muted-foreground">This may take a few seconds...</div>
-          </div>
-        )}
-
-        {gameMode === 'lobby' && multiplayerState.phase === 'showingVerdicts' && (
-          <MultiplayerVerdicts
-            scenario={multiplayerState.scenario}
-            roundNumber={multiplayerState.currentRound}
-            submissions={multiplayerState.submissions}
-            verdicts={multiplayerState.verdicts}
-            onShowLeaderboard={handleShowLeaderboard}
-          />
-        )}
-
-        {gameMode === 'lobby' && multiplayerState.phase === 'showingLeaderboard' && (
-          <MultiplayerLeaderboard
-            leaderboard={multiplayerState.leaderboard}
-            currentRound={multiplayerState.currentRound}
-            onNextRound={handleNextRound}
-            onFinishGame={() => setGameState('finished')}
           />
         )}
 
