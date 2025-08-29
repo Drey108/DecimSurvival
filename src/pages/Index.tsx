@@ -255,16 +255,10 @@ const Index = () => {
   const handleAdvanceToLeaderboard = () => {
     if (!isHost) return;
     
-    // Only show leaderboard after 3 rounds, otherwise go to next round
-    if (multiplayerState.currentRound >= 3) {
-      setMultiplayerState({
-        ...multiplayerState,
-        phase: 'showingLeaderboard'
-      });
-    } else {
-      // Automatically advance to next round
-      handleNextRound();
-    }
+    setMultiplayerState({
+      ...multiplayerState,
+      phase: 'showingLeaderboard'
+    });
   };
 
   const handleNextRound = () => {
