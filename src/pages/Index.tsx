@@ -47,7 +47,9 @@ const Index = () => {
       hostApiKey: '',
       submissions: {},
       verdicts: {},
-      scores: {}
+      scores: {},
+      playerNames: {},
+      leaderboard: []
     });
     isHost = useIsHost();
     players = usePlayersList(true);
@@ -60,7 +62,9 @@ const Index = () => {
       hostApiKey: '',
       submissions: {},
       verdicts: {},
-      scores: {}
+      scores: {},
+      playerNames: {},
+      leaderboard: []
     };
     setMultiplayerState = () => {};
     isHost = false;
@@ -112,11 +116,18 @@ const Index = () => {
         me.setState('profile', { name: playerName.trim() });
       }
       
+      // Store player name in global state
+      const playerId = me?.id;
       setMultiplayerState({
         phase: 'lobby',
         currentRound: 1,
         scenario: '',
-        hostApiKey: ''
+        hostApiKey: '',
+        playerNames: playerId ? { [playerId]: playerName.trim() } : {},
+        scores: {},
+        submissions: {},
+        verdicts: {},
+        leaderboard: []
       });
       setGameMode('lobby');
     } catch (error) {
@@ -142,6 +153,18 @@ const Index = () => {
       const me = myPlayer();
       if (me) {
         me.setState('profile', { name: playerName.trim() });
+      }
+      
+      // Add player name to global state
+      const playerId = me?.id;
+      if (playerId) {
+        setMultiplayerState({
+          ...multiplayerState,
+          playerNames: {
+            ...multiplayerState.playerNames,
+            [playerId]: playerName.trim()
+          }
+        });
       }
       
       setGameMode('lobby');
@@ -255,10 +278,26 @@ const Index = () => {
   const handleAdvanceToLeaderboard = () => {
     if (!isHost) return;
     
-    setMultiplayerState({
-      ...multiplayerState,
-      phase: 'showingLeaderboard'
-    });
+    // Only show leaderboard after 3 rounds, otherwise advance to next round
+    if (multiplayerState.currentRound >= 3) {
+      // Calculate and store final leaderboard
+      const leaderboard = Object.keys(multiplayerState.scores || {})
+        .map(playerId => ({
+          playerId,
+          name: multiplayerState.playerNames?.[playerId] || `Player ${playerId.slice(0, 4)}`,
+          score: multiplayerState.scores?.[playerId] || 0
+        }))
+        .sort((a, b) => b.score - a.score);
+
+      setMultiplayerState({
+        ...multiplayerState,
+        phase: 'showingLeaderboard',
+        leaderboard
+      });
+    } else {
+      // Auto-advance to next round
+      handleNextRound();
+    }
   };
 
   const handleNextRound = () => {
@@ -267,7 +306,7 @@ const Index = () => {
     const nextRound = multiplayerState.currentRound + 1;
     const scenario = scenarios[nextRound - 1];
     
-    if (scenario) {
+    if (scenario && nextRound <= 3) {
       setCurrentScenario(scenario);
       setMultiplayerState({
         ...multiplayerState,
@@ -291,7 +330,9 @@ const Index = () => {
       hostApiKey: '',
       submissions: {},
       verdicts: {},
-      scores: {}
+      scores: {},
+      playerNames: {},
+      leaderboard: []
     });
   };
 

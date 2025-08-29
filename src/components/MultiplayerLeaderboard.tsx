@@ -1,4 +1,4 @@
-import { usePlayersList, useMultiplayerState } from 'playroomkit';
+import { useMultiplayerState } from 'playroomkit';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -17,7 +17,6 @@ const MultiplayerLeaderboard = ({
   isHost, 
   totalRounds 
 }: MultiplayerLeaderboardProps) => {
-  const players = usePlayersList(true);
   const [gameState] = useMultiplayerState('game', {
     phase: 'showingLeaderboard',
     currentRound: 1,
@@ -25,18 +24,23 @@ const MultiplayerLeaderboard = ({
     hostApiKey: '',
     submissions: {},
     verdicts: {},
-    scores: {}
+    scores: {},
+    playerNames: {},
+    leaderboard: []
   });
 
-  // Sort players by score (descending)
-  const sortedPlayers = players
-    .map(player => ({
-      ...player,
-      score: gameState.scores?.[player.id] || 0
-    }))
-    .sort((a, b) => b.score - a.score);
+  // Use leaderboard from global state, fallback to calculating from scores
+  const leaderboardData = gameState.leaderboard?.length > 0 
+    ? gameState.leaderboard
+    : Object.keys(gameState.scores || {})
+        .map(playerId => ({
+          playerId,
+          name: gameState.playerNames?.[playerId] || `Player ${playerId.slice(0, 4)}`,
+          score: gameState.scores?.[playerId] || 0
+        }))
+        .sort((a, b) => b.score - a.score);
 
-  const isGameComplete = roundNumber >= totalRounds;
+  const isGameComplete = true; // Always show final leaderboard after 3 rounds
 
   const handleNext = () => {
     if (isHost) {
@@ -68,13 +72,12 @@ const MultiplayerLeaderboard = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {sortedPlayers.map((player, index) => {
-              const playerName = player.getProfile()?.name || `Player ${player.id.slice(0, 4)}`;
+            {leaderboardData.map((player, index) => {
               const position = index + 1;
               
               return (
                 <div
-                  key={player.id}
+                  key={player.playerId}
                   className={`flex items-center justify-between p-3 rounded ${
                     position === 1 
                       ? 'bg-yellow-100 border border-yellow-300 dark:bg-yellow-900 dark:border-yellow-700'
@@ -88,7 +91,7 @@ const MultiplayerLeaderboard = ({
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-bold">#{position}</span>
                     <span className="font-medium">
-                      {playerName}
+                      {player.name}
                       {position === 1 && ' 👑'}
                     </span>
                   </div>
@@ -108,14 +111,11 @@ const MultiplayerLeaderboard = ({
       <div className="text-center">
         {isHost ? (
           <Button onClick={handleNext} className="px-8 py-3">
-            {isGameComplete ? 'End Game' : 'Next Round'}
+            End Game
           </Button>
         ) : (
           <p className="text-muted-foreground">
-            {isGameComplete 
-              ? 'Waiting for host to end the game...'
-              : 'Waiting for host to start next round...'
-            }
+            Waiting for host to end the game...
           </p>
         )}
       </div>
