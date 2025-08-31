@@ -49,7 +49,9 @@ const Index = () => {
   // Handle room end - kick all players back to menu
   useEffect(() => {
     if (multiplayerState.phase === 'roomEnded') {
+      // Reset local state and go back to setup
       setGameMode('multi-setup');
+      setRoomCode('');
     }
   }, [multiplayerState.phase]);
 
