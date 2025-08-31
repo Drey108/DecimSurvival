@@ -81,17 +81,12 @@ const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLob
             />
             <Button
               onClick={handleStartGame}
-              disabled={!hostApiKey.trim() || players.length < 1}
+              disabled={!hostApiKey.trim()}
               className="w-full"
               variant="default"
             >
               Start Game
             </Button>
-            {players.length < 1 && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Need at least 1 player to start
-              </p>
-            )}
           </div>
         )}
 
