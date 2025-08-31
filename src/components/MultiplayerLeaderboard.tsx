@@ -80,12 +80,12 @@ const MultiplayerLeaderboard = ({
                   key={player.playerId}
                   className={`flex items-center justify-between p-3 rounded ${
                     position === 1 
-                      ? 'bg-yellow-500/20 border-2 border-yellow-500 text-yellow-900 dark:text-yellow-200'
+                      ? 'bg-yellow-100 border border-yellow-300 dark:bg-yellow-900 dark:border-yellow-700'
                       : position === 2
-                      ? 'bg-gray-400/20 border-2 border-gray-400 text-gray-900 dark:text-gray-200'
+                      ? 'bg-gray-100 border border-gray-300 dark:bg-gray-800 dark:border-gray-600'
                       : position === 3
-                      ? 'bg-amber-600/20 border-2 border-amber-600 text-amber-900 dark:text-amber-200'
-                      : 'bg-secondary/20 border border-secondary text-secondary-foreground'
+                      ? 'bg-orange-100 border border-orange-300 dark:bg-orange-900 dark:border-orange-700'
+                      : 'bg-muted'
                   }`}
                 >
                   <div className="flex items-center gap-3">

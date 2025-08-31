@@ -84,7 +84,7 @@ const MultiplayerVerdicts = ({ scenario, roundNumber, onAdvanceToLeaderboard, is
       <div className="text-center">
         {isHost ? (
           <Button onClick={handleContinue} className="px-8 py-3">
-            {roundNumber >= 3 ? 'Continue to Leaderboard' : 'Continue to Next Round'}
+            Continue to Leaderboard
           </Button>
         ) : (
           <p className="text-muted-foreground">
