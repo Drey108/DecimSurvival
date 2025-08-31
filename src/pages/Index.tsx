@@ -272,73 +272,137 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-2xl mx-auto">
-        <header className="text-center mb-8 relative">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            <span className="font-papyrus">Decim</span>
-          </h1>
-          <p className="text-muted-foreground">Survival Game</p>
+    <div className="min-h-screen gradient-bg font-inter">
+      {/* Modern Navigation Header */}
+      <nav className="glass-nav fixed top-0 left-0 right-0 z-50 px-6 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center animate-glow-pulse">
+              <span className="text-primary-foreground font-orbitron font-bold text-sm">D</span>
+            </div>
+            <h1 className="text-2xl font-orbitron font-black text-foreground tracking-wide">
+              DECIM
+            </h1>
+          </div>
           
-        </header>
-
-        {gameMode === 'multi-setup' && (
-          <RoomSetup
-            playerName={playerName}
-            setPlayerName={setPlayerName}
-            onCreateRoom={handleCreateRoom}
-            onJoinRoom={handleJoinRoom}
-          />
-        )}
-
-        {gameMode === 'lobby' && (
-          <MultiplayerLobby
-            roomCode={roomCode}
-            onStartGame={handleMultiplayerStartGame}
-            onLeaveRoom={handleLeaveRoom}
-          />
-        )}
-
-
-        {gameMode === 'multiplayer' && multiplayerState.phase === 'collectingSubmissions' && (
-          <MultiplayerGameScreen
-            scenario={multiplayerState.scenario}
-            roundNumber={multiplayerState.currentRound}
-            onAdvanceToVerdicts={handleAdvanceToVerdicts}
-          />
-        )}
-
-        {gameMode === 'multiplayer' && multiplayerState.phase === 'evaluating' && (
-          <div className="text-center">
-            <div className="text-xl mb-4">AI is analyzing all strategies...</div>
-            <div className="text-muted-foreground">This may take a few moments...</div>
+          <div className="hidden md:flex items-center space-x-6 text-sm text-muted-foreground">
+            <span>Survival Strategy Game</span>
+            {roomCode && (
+              <div className="flex items-center space-x-2 px-3 py-1 glass-card rounded-lg">
+                <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
+                <span className="font-mono text-success font-semibold">{roomCode}</span>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+      </nav>
 
-        {gameMode === 'multiplayer' && multiplayerState.phase === 'showingVerdicts' && (
-          <MultiplayerVerdicts
-            scenario={multiplayerState.scenario}
-            roundNumber={multiplayerState.currentRound}
-            onAdvanceToLeaderboard={handleAdvanceToLeaderboard}
-            isHost={isHost}
-          />
-        )}
+      {/* Main Content */}
+      <div className="pt-20 pb-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          
+          {gameMode === 'multi-setup' && (
+            <div className="animate-fade-in">
+              {/* Hero Section */}
+              <div className="text-center mb-12 pt-8">
+                <div className="hero-gradient rounded-3xl p-12 mb-8">
+                  <h2 className="text-6xl md:text-8xl font-orbitron font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-warning to-primary mb-6 animate-float">
+                    SURVIVE
+                  </h2>
+                  <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+                    Test your survival instincts in extreme scenarios. Make split-second decisions. 
+                    <span className="text-primary font-semibold"> Will you survive?</span>
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+                    <span className="px-4 py-2 glass-card rounded-full">🧟 Zombie Outbreaks</span>
+                    <span className="px-4 py-2 glass-card rounded-full">🏝️ Island Survival</span>
+                    <span className="px-4 py-2 glass-card rounded-full">☢️ Nuclear Fallout</span>
+                    <span className="px-4 py-2 glass-card rounded-full">🔥 Emergency Escapes</span>
+                  </div>
+                </div>
+              </div>
+              
+              <RoomSetup
+                playerName={playerName}
+                setPlayerName={setPlayerName}
+                onCreateRoom={handleCreateRoom}
+                onJoinRoom={handleJoinRoom}
+              />
+            </div>
+          )}
 
-        {gameMode === 'multiplayer' && multiplayerState.phase === 'showingLeaderboard' && (
-          <MultiplayerLeaderboard
-            roundNumber={multiplayerState.currentRound}
-            onNextRound={handleNextRound}
-            onEndGame={handleEndGame}
-            isHost={isHost}
-            totalRounds={scenarios.length}
-          />
-        )}
+          {gameMode === 'lobby' && (
+            <div className="animate-slide-up">
+              <MultiplayerLobby
+                roomCode={roomCode}
+                onStartGame={handleMultiplayerStartGame}
+                onLeaveRoom={handleLeaveRoom}
+              />
+            </div>
+          )}
 
-        {error && (
-          <div className="mt-4 p-4 bg-destructive text-destructive-foreground rounded">
-            <strong>Error:</strong> {error}
-          </div>
-        )}
+          {gameMode === 'multiplayer' && multiplayerState.phase === 'collectingSubmissions' && (
+            <div className="animate-fade-in">
+              <MultiplayerGameScreen
+                scenario={multiplayerState.scenario}
+                roundNumber={multiplayerState.currentRound}
+                onAdvanceToVerdicts={handleAdvanceToVerdicts}
+              />
+            </div>
+          )}
+
+          {gameMode === 'multiplayer' && multiplayerState.phase === 'evaluating' && (
+            <div className="text-center py-20 animate-fade-in">
+              <div className="glass-card rounded-3xl p-12 max-w-md mx-auto">
+                <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6 animate-glow-pulse">
+                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <h3 className="text-2xl font-orbitron font-bold text-foreground mb-4">AI Analysis</h3>
+                <p className="text-muted-foreground">Our AI is evaluating all survival strategies...</p>
+                <div className="mt-6 bg-muted/30 rounded-full h-2">
+                  <div className="progress-glow h-2 rounded-full w-3/4 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {gameMode === 'multiplayer' && multiplayerState.phase === 'showingVerdicts' && (
+            <div className="animate-slide-up">
+              <MultiplayerVerdicts
+                scenario={multiplayerState.scenario}
+                roundNumber={multiplayerState.currentRound}
+                onAdvanceToLeaderboard={handleAdvanceToLeaderboard}
+                isHost={isHost}
+              />
+            </div>
+          )}
+
+          {gameMode === 'multiplayer' && multiplayerState.phase === 'showingLeaderboard' && (
+            <div className="animate-fade-in">
+              <MultiplayerLeaderboard
+                roundNumber={multiplayerState.currentRound}
+                onNextRound={handleNextRound}
+                onEndGame={handleEndGame}
+                isHost={isHost}
+                totalRounds={scenarios.length}
+              />
+            </div>
+          )}
+
+          {error && (
+            <div className="fixed bottom-6 right-6 notification-slide">
+              <div className="glass-card border-l-4 border-destructive rounded-lg p-4 max-w-md">
+                <div className="flex items-start space-x-3">
+                  <div className="w-5 h-5 bg-destructive rounded-full flex-shrink-0 mt-0.5"></div>
+                  <div>
+                    <h4 className="font-semibold text-destructive-foreground">Error</h4>
+                    <p className="text-sm text-muted-foreground mt-1">{error}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
