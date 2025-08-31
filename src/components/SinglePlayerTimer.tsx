@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface SinglePlayerTimerProps {
   onTimeUp: () => void;
@@ -8,28 +8,46 @@ interface SinglePlayerTimerProps {
 
 const SinglePlayerTimer = ({ onTimeUp, isActive, duration = 60 }: SinglePlayerTimerProps) => {
   const [timeLeft, setTimeLeft] = useState(duration);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const onTimeUpRef = useRef(onTimeUp);
 
+  // Update ref when onTimeUp changes
+  useEffect(() => {
+    onTimeUpRef.current = onTimeUp;
+  }, [onTimeUp]);
+
+  // Reset timer when duration changes
   useEffect(() => {
     setTimeLeft(duration);
   }, [duration]);
 
+  // Timer logic with stable references
   useEffect(() => {
     if (!isActive) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       return;
     }
 
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          onTimeUp();
+          onTimeUpRef.current();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [isActive, onTimeUp]);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [isActive]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
