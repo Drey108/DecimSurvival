@@ -1,4 +1,4 @@
-import { useMultiplayerState } from 'playroomkit';
+import { useMultiplayerState, usePlayersList } from 'playroomkit';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -29,16 +29,17 @@ const MultiplayerLeaderboard = ({
     leaderboard: []
   });
 
-  // Use leaderboard from global state, fallback to calculating from scores
+  const players = usePlayersList(true);
+
+  // Ensure all players are shown in leaderboard with their scores
   const leaderboardData = gameState.leaderboard?.length > 0 
     ? gameState.leaderboard
-    : Object.keys(gameState.scores || {})
-        .map(playerId => ({
-          playerId,
-          name: gameState.playerNames?.[playerId] || `Player ${playerId.slice(0, 4)}`,
-          score: gameState.scores?.[playerId] || 0
-        }))
-        .sort((a, b) => b.score - a.score);
+    : players.map(player => ({
+        playerId: player.id,
+        name: gameState.playerNames?.[player.id] || `Player ${player.id.slice(0, 4)}`,
+        score: gameState.scores?.[player.id] || 0
+      }))
+      .sort((a, b) => b.score - a.score);
 
   const isGameComplete = true; // Always show final leaderboard after 3 rounds
 
@@ -111,11 +112,11 @@ const MultiplayerLeaderboard = ({
       <div className="text-center">
         {isHost ? (
           <Button onClick={handleNext} className="px-8 py-3">
-            End Game
+            Back to Menu
           </Button>
         ) : (
           <p className="text-muted-foreground">
-            Waiting for host to end the game...
+            Waiting for host to return to menu...
           </p>
         )}
       </div>
