@@ -17,7 +17,12 @@ const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLob
     phase: 'lobby',
     currentRound: 1,
     scenario: '',
-    hostApiKey: ''
+    hostApiKey: '',
+    submissions: {},
+    verdicts: {},
+    scores: {},
+    playerNames: {},
+    leaderboard: []
   });
 
   // Auto-start game for all players when host starts
@@ -54,7 +59,7 @@ const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLob
                 className="flex items-center justify-between p-2 bg-muted rounded"
               >
                 <span className="text-card-foreground">
-                  {player.getProfile()?.name || `Player ${player.id.slice(0, 4)}`}
+                  {player.getProfile()?.name || gameState.playerNames?.[player.id] || `Player ${player.id.slice(0, 4)}`}
                 </span>
                 {player.id === myPlayer()?.id && (
                   <span className="text-xs text-muted-foreground">(You)</span>
