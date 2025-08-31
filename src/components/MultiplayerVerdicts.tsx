@@ -53,8 +53,8 @@ const MultiplayerVerdicts = ({ scenario, roundNumber, onAdvanceToLeaderboard, is
                     <span
                       className={`ml-2 text-sm px-2 py-1 rounded ${
                         verdict.survived
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          ? 'bg-success text-success-foreground'
+                          : 'bg-destructive text-destructive-foreground'
                       }`}
                     >
                       {verdict.survived ? 'SURVIVED' : 'DIED'}

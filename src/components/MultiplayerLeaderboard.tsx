@@ -81,11 +81,11 @@ const MultiplayerLeaderboard = ({
                   key={player.playerId}
                   className={`flex items-center justify-between p-3 rounded ${
                     position === 1 
-                      ? 'bg-yellow-500/20 border-2 border-yellow-500 text-yellow-900 dark:text-yellow-200'
+                      ? 'bg-warning/20 border-2 border-warning text-warning-foreground'
                       : position === 2
-                      ? 'bg-gray-400/20 border-2 border-gray-400 text-gray-900 dark:text-gray-200'
+                      ? 'bg-muted border-2 border-muted-foreground text-muted-foreground'
                       : position === 3
-                      ? 'bg-amber-600/20 border-2 border-amber-600 text-amber-900 dark:text-amber-200'
+                      ? 'bg-secondary/50 border-2 border-secondary text-secondary-foreground'
                       : 'bg-secondary/20 border border-secondary text-secondary-foreground'
                   }`}
                 >
