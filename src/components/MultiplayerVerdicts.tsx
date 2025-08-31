@@ -18,7 +18,12 @@ const MultiplayerVerdicts = ({ scenario, roundNumber, onAdvanceToLeaderboard, is
     hostApiKey: '',
     submissions: {},
     verdicts: {},
-    scores: {}
+    scores: {},
+    playerNames: {},
+    leaderboard: [],
+    roundEndTime: 0,
+    playersDone: {},
+    submissionTimes: {}
   });
 
   const handleContinue = () => {
@@ -56,6 +61,18 @@ const MultiplayerVerdicts = ({ scenario, roundNumber, onAdvanceToLeaderboard, is
           const submission = gameState.submissions?.[playerId] || 'No strategy submitted';
           const verdict = gameState.verdicts?.[playerId];
           const survived = verdict?.survived || false;
+          const submissionTime = gameState.submissionTimes?.[playerId];
+          const currentScore = gameState.scores?.[playerId] || 0;
+          
+          // Calculate submission time from round start
+          const getSubmissionTimeDisplay = () => {
+            if (submissionTime && gameState.roundEndTime) {
+              const roundStartTime = gameState.roundEndTime - 60000;
+              const timeFromStart = Math.floor((submissionTime - roundStartTime) / 1000);
+              return `${timeFromStart}s`;
+            }
+            return 'No submission';
+          };
 
           return (
             <div
@@ -77,12 +94,31 @@ const MultiplayerVerdicts = ({ scenario, roundNumber, onAdvanceToLeaderboard, is
                   </h3>
                 </div>
                 
-                <div className={`px-6 py-3 rounded-2xl font-orbitron font-black text-lg ${
-                  survived
-                    ? 'bg-success/20 text-success border border-success/30'
-                    : 'bg-destructive/20 text-destructive border border-destructive/30'
-                }`}>
-                  {survived ? '✅ SURVIVED' : '💀 ELIMINATED'}
+                <div className="flex items-center space-x-4">
+                  {/* Submission Time */}
+                  <div className="text-center">
+                    <div className="text-xs text-muted-foreground font-semibold">SUBMIT TIME</div>
+                    <div className="text-sm font-orbitron font-bold text-primary">
+                      {getSubmissionTimeDisplay()}
+                    </div>
+                  </div>
+                  
+                  {/* Score */}
+                  <div className="text-center">
+                    <div className="text-xs text-muted-foreground font-semibold">SCORE</div>
+                    <div className="text-lg font-orbitron font-bold text-warning">
+                      {currentScore}
+                    </div>
+                  </div>
+                  
+                  {/* Status */}
+                  <div className={`px-6 py-3 rounded-2xl font-orbitron font-black text-lg ${
+                    survived
+                      ? 'bg-success/20 text-success border border-success/30'
+                      : 'bg-destructive/20 text-destructive border border-destructive/30'
+                  }`}>
+                    {survived ? '✅ SURVIVED' : '💀 ELIMINATED'}
+                  </div>
                 </div>
               </div>
 

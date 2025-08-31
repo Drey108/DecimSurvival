@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useMultiplayerState } from 'playroomkit';
+import { useMultiplayerState, myPlayer } from 'playroomkit';
 
 interface TimerProps {
   onTimeUp: () => void;
+  isStopped?: boolean;
 }
 
-const Timer = ({ onTimeUp }: TimerProps) => {
+const Timer = ({ onTimeUp, isStopped = false }: TimerProps) => {
   const [timeLeft, setTimeLeft] = useState(60);
+  const [playerSubmissionTime, setPlayerSubmissionTime] = useState<number | null>(null);
   const [gameState] = useMultiplayerState('game', {
     phase: 'collectingSubmissions',
     currentRound: 1,
@@ -18,8 +20,17 @@ const Timer = ({ onTimeUp }: TimerProps) => {
     playerNames: {},
     leaderboard: [],
     roundEndTime: 0,
-    playersDone: {}
+    playersDone: {},
+    submissionTimes: {}
   });
+
+  // Track when current player submitted
+  useEffect(() => {
+    const myPlayerId = myPlayer()?.id;
+    if (myPlayerId && gameState.submissionTimes?.[myPlayerId] && !playerSubmissionTime) {
+      setPlayerSubmissionTime(gameState.submissionTimes[myPlayerId]);
+    }
+  }, [gameState.submissionTimes, playerSubmissionTime]);
 
   useEffect(() => {
     const updateTimer = () => {
@@ -29,16 +40,19 @@ const Timer = ({ onTimeUp }: TimerProps) => {
       const remaining = Math.max(0, Math.ceil((gameState.roundEndTime - now) / 1000));
       setTimeLeft(remaining);
       
-      if (remaining === 0) {
+      if (remaining === 0 && !isStopped) {
         onTimeUp();
       }
     };
+
+    // Don't update timer if player has submitted (timer is stopped)
+    if (isStopped || playerSubmissionTime) return;
 
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     
     return () => clearInterval(interval);
-  }, [gameState.roundEndTime, onTimeUp]);
+  }, [gameState.roundEndTime, onTimeUp, isStopped, playerSubmissionTime]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -46,19 +60,31 @@ const Timer = ({ onTimeUp }: TimerProps) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Calculate submission time for display
+  const getSubmissionTime = () => {
+    if (playerSubmissionTime && gameState.roundEndTime) {
+      const submissionTimeFromStart = Math.floor((gameState.roundEndTime - playerSubmissionTime) / 1000);
+      return 60 - submissionTimeFromStart; // Time taken to submit
+    }
+    return null;
+  };
+
   const getTimerColor = () => {
+    if (isStopped || playerSubmissionTime) return 'text-success';
     if (timeLeft <= 10) return 'text-destructive';
     if (timeLeft <= 30) return 'text-warning';
     return 'text-success';
   };
 
   const getTimerGlow = () => {
+    if (isStopped || playerSubmissionTime) return 'shadow-lg shadow-success/50';
     if (timeLeft <= 10) return 'shadow-lg shadow-destructive/50';
     if (timeLeft <= 30) return 'shadow-lg shadow-warning/50';
     return 'shadow-lg shadow-success/50';
   };
 
   const getProgressWidth = () => {
+    if (isStopped || playerSubmissionTime) return 100; // Full circle when stopped
     return (timeLeft / 60) * 100;
   };
 
@@ -66,17 +92,20 @@ const Timer = ({ onTimeUp }: TimerProps) => {
     <div className="glass-card p-6 rounded-2xl border-0">
       <div className="text-center">
         <h4 className="font-orbitron font-bold text-lg text-foreground mb-4 flex items-center justify-center">
-          <span className="w-2 h-2 bg-destructive rounded-full mr-3 animate-pulse"></span>
-          Mission Timer
+          <span className={`w-2 h-2 rounded-full mr-3 ${
+            isStopped || playerSubmissionTime ? 'bg-success' : 'bg-destructive animate-pulse'
+          }`}></span>
+          {isStopped || playerSubmissionTime ? 'Submitted!' : 'Mission Timer'}
         </h4>
         
         <div className={`inline-flex items-center justify-center w-32 h-32 rounded-full ${getTimerGlow()} bg-card/50 border-4 ${
+          isStopped || playerSubmissionTime ? 'border-success' :
           timeLeft <= 10 ? 'border-destructive animate-pulse' : 
           timeLeft <= 30 ? 'border-warning' : 
           'border-success'
         } mb-4`}>
           <span className={`text-4xl font-orbitron font-black ${getTimerColor()}`}>
-            {formatTime(timeLeft)}
+            {isStopped || playerSubmissionTime ? '✓' : formatTime(timeLeft)}
           </span>
         </div>
         
@@ -108,29 +137,42 @@ const Timer = ({ onTimeUp }: TimerProps) => {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <div className={`text-3xl font-orbitron font-black ${getTimerColor()}`}>
-                {formatTime(timeLeft)}
+                {isStopped || playerSubmissionTime ? '✓' : formatTime(timeLeft)}
               </div>
               <div className="text-xs text-muted-foreground font-semibold">
-                REMAINING
+                {isStopped || playerSubmissionTime ? 
+                  (getSubmissionTime() ? `${getSubmissionTime()}s` : 'DONE') : 
+                  'REMAINING'
+                }
               </div>
             </div>
           </div>
         </div>
         
-        {timeLeft <= 10 && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3">
-            <p className="text-sm text-destructive font-semibold animate-pulse">
-              ⚠️ TIME CRITICAL! Submit now or face the consequences!
+        {isStopped || playerSubmissionTime ? (
+          <div className="bg-success/10 border border-success/20 rounded-xl p-3">
+            <p className="text-sm text-success font-semibold">
+              ✅ Strategy submitted! {getSubmissionTime() && `Completed in ${getSubmissionTime()} seconds`}
             </p>
           </div>
-        )}
-        
-        {timeLeft > 10 && timeLeft <= 30 && (
-          <div className="bg-warning/10 border border-warning/20 rounded-xl p-3">
-            <p className="text-sm text-warning font-semibold">
-              ⏰ Time is running short. Finalize your strategy!
-            </p>
-          </div>
+        ) : (
+          <>
+            {timeLeft <= 10 && (
+              <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3">
+                <p className="text-sm text-destructive font-semibold animate-pulse">
+                  ⚠️ TIME CRITICAL! Submit now or face the consequences!
+                </p>
+              </div>
+            )}
+            
+            {timeLeft > 10 && timeLeft <= 30 && (
+              <div className="bg-warning/10 border border-warning/20 rounded-xl p-3">
+                <p className="text-sm text-warning font-semibold">
+                  ⏰ Time is running short. Finalize your strategy!
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

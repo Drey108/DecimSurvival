@@ -40,7 +40,8 @@ const Index = () => {
     playerNames: {},
     leaderboard: [],
     roundEndTime: 0,
-    playersDone: {}
+    playersDone: {},
+    submissionTimes: {}
   });
   const isHost = useIsHost();
   const players = usePlayersList(true);
@@ -94,7 +95,8 @@ const Index = () => {
         verdicts: {},
         leaderboard: [],
         roundEndTime: 0,
-        playersDone: {}
+        playersDone: {},
+        submissionTimes: {}
       });
       setGameMode('lobby');
     } catch (error) {
@@ -155,8 +157,9 @@ const Index = () => {
       hostApiKey,
       phase: 'collectingSubmissions',
       scenario,
-      roundEndTime,
-      playersDone: {}
+        roundEndTime,
+        playersDone: {},
+        submissionTimes: {}
     });
     setGameMode('multiplayer');
   };
@@ -176,15 +179,43 @@ const Index = () => {
       const verdicts: { [playerId: string]: { narrative: string; survived: boolean } } = {};
       const scores = { ...multiplayerState.scores };
 
+      // Calculate time-based scoring (like skribble.io)
+      const submissionTimes = multiplayerState.submissionTimes || {};
+      const roundStartTime = multiplayerState.roundEndTime - 60000; // 60 seconds ago
+      
+      // Sort players by submission time (fastest first)
+      const sortedSubmissions = Object.entries(submissionTimes)
+        .filter(([playerId]) => multiplayerState.submissions?.[playerId])
+        .sort(([, timeA], [, timeB]) => (timeA as number) - (timeB as number));
+
       for (const [playerId, strategy] of Object.entries(multiplayerState.submissions || {})) {
         try {
           const result = await analyzeStrategy(multiplayerState.scenario, strategy as string);
           verdicts[playerId] = result;
           
-          // Update scores
+          // Base survival points
+          let playerScore = 0;
           if (result.survived) {
-            scores[playerId] = (scores[playerId] || 0) + 1;
+            playerScore += 100; // Base survival points
+            
+            // Time bonus points (like skribble.io)
+            const submissionTime = submissionTimes[playerId];
+            if (submissionTime) {
+              const submissionIndex = sortedSubmissions.findIndex(([id]) => id === playerId);
+              const totalSubmissions = sortedSubmissions.length;
+              
+              // Fast submission bonus: 50 points for fastest, decreasing by position
+              const speedBonus = Math.max(0, 50 - (submissionIndex * 10));
+              playerScore += speedBonus;
+              
+              // Time efficiency bonus: based on how quickly they submitted
+              const timeFromStart = submissionTime - roundStartTime;
+              const timeBonus = Math.max(0, Math.floor((60000 - timeFromStart) / 1000)); // 1 point per second saved
+              playerScore += timeBonus;
+            }
           }
+          
+          scores[playerId] = (scores[playerId] || 0) + playerScore;
         } catch (error) {
           verdicts[playerId] = {
             narrative: 'Failed to analyze strategy.',
@@ -246,7 +277,8 @@ const Index = () => {
         roundEndTime,
         submissions: {},
         verdicts: {},
-        playersDone: {}
+        playersDone: {},
+        submissionTimes: {}
       });
     }
   };
@@ -267,7 +299,8 @@ const Index = () => {
       playerNames: {},
       leaderboard: [],
       roundEndTime: 0,
-      playersDone: {}
+      playersDone: {},
+      submissionTimes: {}
     });
   };
 

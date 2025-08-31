@@ -27,7 +27,8 @@ const MultiplayerGameScreen = ({ scenario, roundNumber, onAdvanceToVerdicts }: M
     playerNames: {},
     leaderboard: [],
     roundEndTime: 0,
-    playersDone: {}
+    playersDone: {},
+    submissionTimes: {}
   });
 
   // Check if all players are done (submitted or timed out)
@@ -50,7 +51,8 @@ const MultiplayerGameScreen = ({ scenario, roundNumber, onAdvanceToVerdicts }: M
     if (strategy.trim() && !hasSubmitted) {
       const myPlayerId = myPlayer()?.id;
       if (myPlayerId) {
-        // Update submissions and mark player as done
+        const submissionTime = Date.now();
+        // Update submissions, mark player as done, and record submission time
         setGameState({
           ...gameState,
           submissions: {
@@ -60,6 +62,10 @@ const MultiplayerGameScreen = ({ scenario, roundNumber, onAdvanceToVerdicts }: M
           playersDone: {
             ...gameState.playersDone,
             [myPlayerId]: true
+          },
+          submissionTimes: {
+            ...gameState.submissionTimes,
+            [myPlayerId]: submissionTime
           }
         });
         setHasSubmitted(true);
@@ -70,6 +76,7 @@ const MultiplayerGameScreen = ({ scenario, roundNumber, onAdvanceToVerdicts }: M
   const handleTimeUp = () => {
     const myPlayerId = myPlayer()?.id;
     if (myPlayerId && !hasSubmitted) {
+      const submissionTime = Date.now();
       // Auto-submit empty strategy and mark as done
       setGameState({
         ...gameState,
@@ -80,6 +87,10 @@ const MultiplayerGameScreen = ({ scenario, roundNumber, onAdvanceToVerdicts }: M
         playersDone: {
           ...gameState.playersDone,
           [myPlayerId]: true
+        },
+        submissionTimes: {
+          ...gameState.submissionTimes,
+          [myPlayerId]: submissionTime
         }
       });
       setHasSubmitted(true);
@@ -154,7 +165,7 @@ const MultiplayerGameScreen = ({ scenario, roundNumber, onAdvanceToVerdicts }: M
 
       {/* Enhanced Sidebar */}
       <div className="w-96 space-y-6">
-        <Timer onTimeUp={handleTimeUp} />
+        <Timer onTimeUp={handleTimeUp} isStopped={hasSubmitted} />
         
         {/* Mission Control Panel */}
         <div className="glass-card p-6 rounded-2xl border-0">
