@@ -446,20 +446,12 @@ const Index = () => {
                 {score === 0 && "Better luck next time, survival isn't easy!"}
               </p>
             </div>
-            <div className="space-y-3">
-              <button
-                onClick={resetGame}
-                className="bg-primary text-primary-foreground px-6 py-2 rounded hover:opacity-90 w-full"
-              >
-                Play Again
-              </button>
-              <button
-                onClick={() => setGameMode('menu')}
-                className="bg-secondary text-secondary-foreground px-6 py-2 rounded hover:opacity-90 w-full"
-              >
-                Back to Menu
-              </button>
-            </div>
+            <button
+              onClick={resetGame}
+              className="bg-primary text-primary-foreground px-6 py-2 rounded hover:opacity-90"
+            >
+              Play Again
+            </button>
           </div>
         )}
 
