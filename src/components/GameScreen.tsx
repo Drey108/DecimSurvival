@@ -49,15 +49,16 @@ const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading }: Game
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <ScenarioDisplay scenario={scenario} roundNumber={roundNumber} />
-        </div>
-        <SinglePlayerTimer 
-          onTimeUp={handleTimeUp} 
-          isActive={timerActive && !isLoading} 
-        />
-      </div>
+      <ScenarioDisplay 
+        scenario={scenario} 
+        roundNumber={roundNumber} 
+        timerComponent={
+          <SinglePlayerTimer 
+            onTimeUp={handleTimeUp} 
+            isActive={timerActive && !isLoading} 
+          />
+        }
+      />
       
       <form onSubmit={handleSubmit}>
         <div className="mb-4">

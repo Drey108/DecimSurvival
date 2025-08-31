@@ -29,7 +29,7 @@ const SinglePlayerTimer = ({ onTimeUp, isActive, duration = 60 }: SinglePlayerTi
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isActive, onTimeUp, duration]);
+  }, [isActive, onTimeUp]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
