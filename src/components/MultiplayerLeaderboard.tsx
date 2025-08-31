@@ -36,7 +36,7 @@ const MultiplayerLeaderboard = ({
     ? gameState.leaderboard
     : players.map(player => ({
         playerId: player.id,
-        name: gameState.playerNames?.[player.id] || player.getProfile()?.name || `Player ${player.id.slice(0, 4)}`,
+        name: gameState.playerNames?.[player.id] || `Player ${player.id.slice(0, 4)}`,
         score: gameState.scores?.[player.id] || 0
       }))
       .sort((a, b) => b.score - a.score);
