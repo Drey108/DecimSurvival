@@ -54,12 +54,12 @@ const MultiplayerLeaderboard = ({
   };
 
   return (
-    <div className="leaderboard-screen">
-      <div className="leaderboard-header text-center mb-8">
-        <h2 className="page-title text-3xl font-bold mb-3 text-primary">
+    <div>
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold mb-2 text-foreground">
           {isGameComplete ? 'Final Leaderboard' : `Round ${roundNumber} Leaderboard`}
         </h2>
-        <p className="page-subtitle text-muted-foreground text-lg">
+        <p className="text-muted-foreground">
           {isGameComplete 
             ? 'Game Complete!' 
             : `${totalRounds - roundNumber} rounds remaining`
@@ -67,38 +67,38 @@ const MultiplayerLeaderboard = ({
         </p>
       </div>
 
-      <Card className="standings-card mb-8">
-        <CardHeader className="card-header">
-          <CardTitle className="card-title text-xl">Final Standings</CardTitle>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Current Standings</CardTitle>
         </CardHeader>
-        <CardContent className="card-content">
-          <div className="rankings-list space-y-4">
+        <CardContent>
+          <div className="space-y-3">
             {leaderboardData.map((player, index) => {
               const position = index + 1;
               
               return (
                 <div
                   key={player.playerId}
-                  className={`ranking-item flex items-center justify-between p-4 rounded-lg ${
+                  className={`flex items-center justify-between p-3 rounded ${
                     position === 1 
-                      ? 'bg-warning/20 border-2 border-warning'
+                      ? 'bg-warning/20 border-2 border-warning text-warning-foreground'
                       : position === 2
-                      ? 'bg-muted border-2 border-muted-foreground'
+                      ? 'bg-muted border-2 border-muted-foreground text-muted-foreground'
                       : position === 3
-                      ? 'bg-secondary/50 border-2 border-secondary'
-                      : 'bg-secondary/20 border border-secondary'
+                      ? 'bg-secondary/50 border-2 border-secondary text-secondary-foreground'
+                      : 'bg-secondary/20 border border-secondary text-secondary-foreground'
                   }`}
                 >
-                  <div className="player-info flex items-center gap-4">
-                    <span className="position text-xl font-bold text-primary">#{position}</span>
-                    <span className="player-name font-semibold text-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold">#{position}</span>
+                    <span className="font-medium">
                       {player.name}
                       {position === 1 && ' 👑'}
                     </span>
                   </div>
-                  <div className="score-info flex items-center gap-3">
-                    <span className="score text-xl font-bold text-primary">{player.score}</span>
-                    <span className="score-label text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold">{player.score}</span>
+                    <span className="text-sm text-muted-foreground">
                       {player.score === 1 ? 'survival' : 'survivals'}
                     </span>
                   </div>
@@ -109,13 +109,13 @@ const MultiplayerLeaderboard = ({
         </CardContent>
       </Card>
 
-      <div className="actions-section text-center">
+      <div className="text-center">
         {isHost ? (
-          <Button onClick={handleNext} className="menu-button px-8 py-3">
+          <Button onClick={handleNext} className="px-8 py-3">
             Back to Menu
           </Button>
         ) : (
-          <p className="waiting-text text-muted-foreground text-lg">
+          <p className="text-muted-foreground">
             Waiting for host to return to menu...
           </p>
         )}

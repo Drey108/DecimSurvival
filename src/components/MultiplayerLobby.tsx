@@ -38,55 +38,51 @@ const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLob
   };
 
   return (
-    <div className="lobby-screen text-center">
-      <div className="lobby-card bg-card border border-border p-8 rounded-lg">
-        <h2 className="card-title text-2xl font-bold mb-4 text-primary">Game Lobby</h2>
-        <div className="room-code text-xl font-mono mb-8 text-primary bg-primary/10 py-2 px-4 rounded">
-          Room: {roomCode}
-        </div>
+    <div className="text-center">
+      <div className="bg-card border border-border p-6 rounded mb-4">
+        <h2 className="text-xl font-bold mb-2 text-card-foreground">Room Lobby</h2>
+        <div className="text-lg font-mono mb-6 text-primary">Room Code: {roomCode}</div>
         
-        <div className="players-section mb-8">
-          <h3 className="section-title text-lg font-semibold mb-4 text-card-foreground">
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3 text-card-foreground">
             Players ({players.length}/4)
           </h3>
-          <div className="players-list space-y-3">
+          <div className="space-y-2">
             {players.map((player) => (
               <div
                 key={player.id}
-                className="player-card flex items-center justify-between p-3 bg-muted rounded-lg"
+                className="flex items-center justify-between p-2 bg-muted rounded"
               >
-                <span className="player-name text-card-foreground font-medium">
+                <span className="text-card-foreground">
                   {player.getProfile()?.name || `Player ${player.id.slice(0, 4)}`}
                 </span>
-                <div className="player-badges flex gap-2">
-                  {player.id === myPlayer()?.id && (
-                    <span className="badge text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">You</span>
-                  )}
-                  {players.findIndex(p => p.id === player.id) === 0 && (
-                    <span className="badge text-xs bg-primary text-primary-foreground px-2 py-1 rounded">Host</span>
-                  )}
-                </div>
+                {player.id === myPlayer()?.id && (
+                  <span className="text-xs text-muted-foreground">(You)</span>
+                )}
+                {players.findIndex(p => p.id === player.id) === 0 && (
+                  <span className="text-xs text-primary font-medium">(Host)</span>
+                )}
               </div>
             ))}
           </div>
         </div>
 
         {isHost && (
-          <div className="host-section mb-8">
-            <label className="field-label block text-sm font-medium mb-3 text-card-foreground">
-              Groq API Key (Required)
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-2 text-card-foreground">
+              Groq API Key (Required):
             </label>
             <Input
               type="password"
               value={hostApiKey}
               onChange={(e) => setHostApiKey(e.target.value)}
               placeholder="Enter your Groq API key"
-              className="api-input w-full mb-4"
+              className="w-full mb-3"
             />
             <Button
               onClick={handleStartGame}
               disabled={!hostApiKey.trim()}
-              className="start-button w-full py-3"
+              className="w-full"
               variant="default"
             >
               Start Game
@@ -95,8 +91,8 @@ const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLob
         )}
 
         {!isHost && (
-          <div className="waiting-section mb-8">
-            <p className="waiting-text text-muted-foreground text-lg">
+          <div className="mb-6">
+            <p className="text-muted-foreground">
               Waiting for host to start the game...
             </p>
           </div>
@@ -105,7 +101,6 @@ const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLob
       
       <Button
         onClick={onLeaveRoom}
-        className="leave-button mt-4"
         variant="ghost"
       >
         Leave Room
