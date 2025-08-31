@@ -45,7 +45,7 @@ const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLob
         
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-3 text-card-foreground">
-            Players ({players.length}/4)
+            Players ({players.length}/8)
           </h3>
           <div className="space-y-2">
             {players.map((player) => (

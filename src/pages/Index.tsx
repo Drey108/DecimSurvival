@@ -356,24 +356,9 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-2xl mx-auto">
-        <header className="text-center mb-8 relative">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            <span className="font-papyrus">Decim</span>
-          </h1>
+        <header className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-2">DECIM</h1>
           <p className="text-muted-foreground">Survival Game</p>
-          
-          {/* Status Bar for active games */}
-          {(gameMode === 'single' || gameMode === 'multiplayer') && gameState === 'playing' && (
-            <div className="status-bar">
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium">Round {currentRound}/3</span>
-                {gameMode === 'single' && <span className="text-sm">Score: {score}</span>}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {gameMode === 'single' ? 'Solo Challenge' : 'Multiplayer'}
-              </div>
-            </div>
-          )}
         </header>
 
         {gameMode === 'menu' && (

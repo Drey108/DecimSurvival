@@ -20,7 +20,7 @@ const ModeSelector = ({ onSelectMode }: ModeSelectorProps) => {
           <Button
             onClick={() => onSelectMode('multiplayer')}
             className="w-full"
-            variant="default"
+            variant="outline"
           >
             Multiplayer
           </Button>
