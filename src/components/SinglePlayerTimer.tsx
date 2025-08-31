@@ -10,8 +10,11 @@ const SinglePlayerTimer = ({ onTimeUp, isActive, duration = 60 }: SinglePlayerTi
   const [timeLeft, setTimeLeft] = useState(duration);
 
   useEffect(() => {
+    setTimeLeft(duration);
+  }, [duration]);
+
+  useEffect(() => {
     if (!isActive) {
-      setTimeLeft(duration);
       return;
     }
 

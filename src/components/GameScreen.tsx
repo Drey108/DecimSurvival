@@ -18,6 +18,7 @@ const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading }: Game
   useEffect(() => {
     setTimerActive(true);
     setHasSubmitted(false);
+    setStrategy('');
   }, [scenario]);
 
   const handleSubmit = (e: React.FormEvent) => {
