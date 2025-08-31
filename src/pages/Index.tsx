@@ -285,8 +285,8 @@ const Index = () => {
   };
 
   return (
-    <main className="min-h-screen bg-background p-8">
-      <div className="container max-w-4xl mx-auto">
+    <main className="min-h-screen bg-gradient-to-br from-background via-background to-card/30 p-8">
+      <div className="container max-w-7xl mx-auto">
         <header className="header text-center mb-12">
           <h1 className="title text-5xl font-bold text-primary mb-3">
             <span className="font-papyrus">Decim</span>
