@@ -92,11 +92,51 @@ const MultiplayerGameScreen = ({ scenario, roundNumber, onAdvanceToVerdicts }: M
   const submissionProgress = (donePlayerIds.length / Math.max(allPlayerIds.length, 1)) * 100;
 
   return (
-    <div className="flex gap-6">
+    <div className="flex gap-6 max-w-4xl mx-auto">
+      {/* Main Game Area */}
+      <div className="flex-1">
+        <ScenarioDisplay 
+          scenario={scenario} 
+          roundNumber={roundNumber} 
+          timerComponent={<Timer onTimeUp={handleTimeUp} />}
+        />
+      
+        {!hasSubmitted ? (
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label className="block font-semibold mb-2 text-foreground">
+                Your Survival Strategy:
+              </label>
+              <textarea
+                value={strategy}
+                onChange={(e) => setStrategy(e.target.value)}
+                placeholder="Describe your strategy to survive this scenario..."
+                className="w-full h-32 p-3 border border-border rounded bg-input text-foreground resize-none"
+              />
+            </div>
+            
+            <Button
+              type="submit"
+              disabled={!strategy.trim()}
+              className="w-full"
+            >
+              Submit Strategy
+            </Button>
+          </form>
+        ) : (
+          <div className="bg-card border border-border p-6 rounded">
+            <h3 className="text-lg font-semibold mb-4 text-card-foreground">
+              Strategy Submitted!
+            </h3>
+            <p className="text-muted-foreground">
+              Waiting for other players to finish...
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Timer and Progress Sidebar */}
       <div className="w-80 space-y-4">
-        <Timer onTimeUp={handleTimeUp} />
-        
         {/* Progress Bar */}
         <div className="bg-card border border-border p-4 rounded">
           <div className="flex justify-between text-sm mb-2">
@@ -136,44 +176,6 @@ const MultiplayerGameScreen = ({ scenario, roundNumber, onAdvanceToVerdicts }: M
             })}
           </div>
         </div>
-      </div>
-
-      {/* Main Game Area */}
-      <div className="flex-1">
-        <ScenarioDisplay scenario={scenario} roundNumber={roundNumber} />
-      
-        {!hasSubmitted ? (
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label className="block font-semibold mb-2 text-foreground">
-                Your Survival Strategy:
-              </label>
-              <textarea
-                value={strategy}
-                onChange={(e) => setStrategy(e.target.value)}
-                placeholder="Describe your strategy to survive this scenario..."
-                className="w-full h-32 p-3 border border-border rounded bg-input text-foreground resize-none"
-              />
-            </div>
-            
-            <Button
-              type="submit"
-              disabled={!strategy.trim()}
-              className="w-full"
-            >
-              Submit Strategy
-            </Button>
-          </form>
-        ) : (
-          <div className="bg-card border border-border p-6 rounded">
-            <h3 className="text-lg font-semibold mb-4 text-card-foreground">
-              Strategy Submitted!
-            </h3>
-            <p className="text-muted-foreground">
-              Waiting for other players to finish...
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
