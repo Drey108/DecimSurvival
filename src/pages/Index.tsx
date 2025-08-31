@@ -28,21 +28,39 @@ const Index = () => {
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   
-const [multiplayerState, setMultiplayerState] = useMultiplayerState('game', {
-  phase: 'lobby' as MultiplayerPhase,
-  currentRound: 1,
-  scenario: '',
-  hostApiKey: '',
-  submissions: {},
-  verdicts: {},
-  scores: {},
-  playerNames: {},
-  leaderboard: [],
-  roundEndTime: 0,
-  playersDone: {}
-});
-const isHost = useIsHost();
-const players = usePlayersList(true);
+  // Initialize multiplayer state with error handling
+  let multiplayerState, setMultiplayerState, isHost, players;
+  try {
+    [multiplayerState, setMultiplayerState] = useMultiplayerState('game', {
+      phase: 'lobby' as MultiplayerPhase,
+      currentRound: 1,
+      scenario: '',
+      hostApiKey: '',
+      submissions: {},
+      verdicts: {},
+      scores: {},
+      playerNames: {},
+      leaderboard: []
+    });
+    isHost = useIsHost();
+    players = usePlayersList(true);
+  } catch (e) {
+    // Fallback to default values if multiplayer fails
+    multiplayerState = { 
+      phase: 'lobby' as MultiplayerPhase, 
+      currentRound: 1, 
+      scenario: '', 
+      hostApiKey: '',
+      submissions: {},
+      verdicts: {},
+      scores: {},
+      playerNames: {},
+      leaderboard: []
+    };
+    setMultiplayerState = () => {};
+    isHost = false;
+    players = [];
+  }
 
   const { analyzeStrategy, isLoading } = useGroqAPI(apiKey);
 
@@ -91,9 +109,7 @@ const players = usePlayersList(true);
         scores: {},
         submissions: {},
         verdicts: {},
-        leaderboard: [],
-        roundEndTime: 0,
-        playersDone: {}
+        leaderboard: []
       });
       setGameMode('lobby');
     } catch (error) {
@@ -264,9 +280,7 @@ const players = usePlayersList(true);
       verdicts: {},
       scores: {},
       playerNames: {},
-      leaderboard: [],
-      roundEndTime: 0,
-      playersDone: {}
+      leaderboard: []
     });
   };
 
