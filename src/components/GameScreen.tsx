@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ScenarioDisplay from './ScenarioDisplay';
+import SinglePlayerTimer from './SinglePlayerTimer';
 
 interface GameScreenProps {
   scenario: string;
@@ -10,11 +11,29 @@ interface GameScreenProps {
 
 const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading }: GameScreenProps) => {
   const [strategy, setStrategy] = useState('');
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [timerActive, setTimerActive] = useState(true);
+
+  // Reset timer when scenario changes
+  useEffect(() => {
+    setTimerActive(true);
+    setHasSubmitted(false);
+  }, [scenario]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (strategy.trim()) {
+    if (strategy.trim() && !hasSubmitted) {
+      setHasSubmitted(true);
+      setTimerActive(false);
       onStrategySubmit(strategy.trim());
+    }
+  };
+
+  const handleTimeUp = () => {
+    if (!hasSubmitted) {
+      setHasSubmitted(true);
+      setTimerActive(false);
+      onStrategySubmit(strategy.trim() || ''); // Submit whatever they have, even if empty
     }
   };
 
@@ -29,7 +48,15 @@ const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading }: Game
 
   return (
     <div>
-      <ScenarioDisplay scenario={scenario} roundNumber={roundNumber} />
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <ScenarioDisplay scenario={scenario} roundNumber={roundNumber} />
+        </div>
+        <SinglePlayerTimer 
+          onTimeUp={handleTimeUp} 
+          isActive={timerActive && !isLoading} 
+        />
+      </div>
       
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
@@ -41,16 +68,16 @@ const GameScreen = ({ scenario, roundNumber, onStrategySubmit, isLoading }: Game
             onChange={(e) => setStrategy(e.target.value)}
             placeholder="Describe your strategy to survive this scenario..."
             className="w-full h-32 p-3 border border-border rounded bg-input text-foreground resize-none"
-            disabled={isLoading}
+            disabled={isLoading || hasSubmitted}
           />
         </div>
         
         <button
           type="submit"
-          disabled={!strategy.trim() || isLoading}
+          disabled={!strategy.trim() || isLoading || hasSubmitted}
           className="w-full bg-primary text-primary-foreground p-3 rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Submit Strategy
+          {hasSubmitted ? 'Strategy Submitted' : 'Submit Strategy'}
         </button>
       </form>
     </div>
