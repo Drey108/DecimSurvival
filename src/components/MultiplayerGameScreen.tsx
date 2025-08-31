@@ -103,20 +103,16 @@ const MultiplayerGameScreen = ({ scenario, roundNumber, onAdvanceToVerdicts }: M
   const submissionProgress = (donePlayerIds.length / Math.max(allPlayerIds.length, 1)) * 100;
 
   return (
-    <div className="space-y-6">
-      {/* Top Row: Scenario and Timer */}
-      <div className="flex gap-6 items-start">
-        <div className="flex-1">
+    <div className="flex gap-6 h-full">
+      {/* Main Content Area */}
+      <div className="flex-1 space-y-6">
+        {/* Scenario Section */}
+        <div className="w-full">
           <ScenarioDisplay scenario={scenario} roundNumber={roundNumber} />
         </div>
-        <div className="w-80">
-          <Timer onTimeUp={handleTimeUp} isStopped={hasSubmitted} />
-        </div>
-      </div>
 
-      <div className="flex gap-8">
-        {/* Main Content - Survival Strategy */}
-        <div className="flex-1">
+        {/* Survival Strategy Section */}
+        <div className="w-full">
           {!hasSubmitted ? (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="glass-card p-6 rounded-2xl border-0">
@@ -171,74 +167,85 @@ const MultiplayerGameScreen = ({ scenario, roundNumber, onAdvanceToVerdicts }: M
             </div>
           )}
         </div>
+      </div>
 
-        {/* Right Sidebar - Mission Status */}
-        <div className="w-80">
-          <div className="glass-card p-6 rounded-2xl border-0">
-            <h4 className="font-orbitron font-bold text-lg text-foreground mb-4 flex items-center">
-              <span className="w-2 h-2 bg-warning rounded-full mr-3 animate-pulse"></span>
-              Mission Status
-            </h4>
-            
-            <div className="space-y-4">
-              {/* Progress Overview */}
-              <div className="bg-secondary/30 p-4 rounded-xl">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold text-foreground">Squad Progress</span>
-                  <span className="text-sm font-mono text-primary">
-                    {donePlayerIds.length}/{allPlayerIds.length}
-                  </span>
-                </div>
-                <Progress value={submissionProgress} className="w-full mb-2" />
-                <p className="text-xs text-muted-foreground text-center">
-                  {submissionProgress === 100 ? 'All strategies submitted!' : 'Waiting for team members...'}
-                </p>
-              </div>
-              
-              {/* Player Status Grid */}
-              <div>
-                <h5 className="text-sm font-semibold text-foreground mb-3">Team Status:</h5>
-                <div className="space-y-2">
-                  {players.map((player) => {
-                    const isDone = gameState.playersDone?.[player.id];
-                    const playerName = gameState.playerNames?.[player.id] || `Player ${player.id.slice(0, 4)}`;
-                    const isCurrentPlayer = player.id === myPlayer()?.id;
-                    return (
-                      <div
-                        key={player.id}
-                        className={`glass-card p-3 rounded-lg border-l-4 transition-all duration-300 ${
-                          isCurrentPlayer 
-                            ? 'border-l-primary bg-primary/5' 
-                            : isDone 
-                            ? 'border-l-success bg-success/5' 
-                            : 'border-l-warning bg-warning/5'
+      {/* Right Sidebar */}
+      <div className="w-80 bg-card/50 border-l border-border/50 p-6 space-y-6">
+        {/* Timer Section */}
+        <div className="space-y-4">
+          <h4 className="font-orbitron font-bold text-lg text-foreground flex items-center">
+            <span className="w-2 h-2 bg-primary rounded-full mr-3 animate-pulse"></span>
+            Mission Timer
+          </h4>
+          <Timer onTimeUp={handleTimeUp} isStopped={hasSubmitted} />
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-border/50"></div>
+
+        {/* Mission Status Section */}
+        <div className="space-y-4">
+          <h4 className="font-orbitron font-bold text-lg text-foreground flex items-center">
+            <span className="w-2 h-2 bg-warning rounded-full mr-3 animate-pulse"></span>
+            Mission Status
+          </h4>
+          
+          {/* Progress Overview */}
+          <div className="bg-secondary/30 p-4 rounded-xl">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-semibold text-foreground">Squad Progress</span>
+              <span className="text-sm font-mono text-primary">
+                {donePlayerIds.length}/{allPlayerIds.length}
+              </span>
+            </div>
+            <Progress value={submissionProgress} className="w-full mb-2" />
+            <p className="text-xs text-muted-foreground text-center">
+              {submissionProgress === 100 ? 'All strategies submitted!' : 'Waiting for team members...'}
+            </p>
+          </div>
+          
+          {/* Player Status Grid */}
+          <div>
+            <h5 className="text-sm font-semibold text-foreground mb-3">Team Status:</h5>
+            <div className="space-y-2">
+              {players.map((player) => {
+                const isDone = gameState.playersDone?.[player.id];
+                const playerName = gameState.playerNames?.[player.id] || `Player ${player.id.slice(0, 4)}`;
+                const isCurrentPlayer = player.id === myPlayer()?.id;
+                return (
+                  <div
+                    key={player.id}
+                    className={`p-3 rounded-lg border-l-4 transition-all duration-300 bg-card/30 ${
+                      isCurrentPlayer 
+                        ? 'border-l-primary bg-primary/5' 
+                        : isDone 
+                        ? 'border-l-success bg-success/5' 
+                        : 'border-l-warning bg-warning/5'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          isDone ? 'status-online' : 'status-waiting'
+                        }`}></div>
+                        <span className="text-sm font-medium text-foreground">
+                          {playerName}
+                          {isCurrentPlayer && " (You)"}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                          isDone
+                            ? 'bg-success/20 text-success'
+                            : 'bg-warning/20 text-warning'
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <div className={`w-2 h-2 rounded-full ${
-                              isDone ? 'status-online' : 'status-waiting'
-                            }`}></div>
-                            <span className="text-sm font-medium text-foreground">
-                              {playerName}
-                              {isCurrentPlayer && " (You)"}
-                            </span>
-                          </div>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full font-semibold ${
-                              isDone
-                                ? 'bg-success/20 text-success'
-                                : 'bg-warning/20 text-warning'
-                            }`}
-                          >
-                            {isDone ? '✓ Done' : '⏳ Working'}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+                        {isDone ? '✓ Done' : '⏳ Working'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
