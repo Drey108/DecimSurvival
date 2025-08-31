@@ -7,10 +7,9 @@ interface RoomSetupProps {
   setPlayerName: (name: string) => void;
   onCreateRoom: () => void;
   onJoinRoom: (roomCode: string) => void;
-  onBack: () => void;
 }
 
-const RoomSetup = ({ playerName, setPlayerName, onCreateRoom, onJoinRoom, onBack }: RoomSetupProps) => {
+const RoomSetup = ({ playerName, setPlayerName, onCreateRoom, onJoinRoom }: RoomSetupProps) => {
   const [joinRoomCode, setJoinRoomCode] = useState('');
 
   const handleJoinRoomCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,13 +77,6 @@ const RoomSetup = ({ playerName, setPlayerName, onCreateRoom, onJoinRoom, onBack
           </div>
         </div>
       </div>
-      
-      <Button
-        onClick={onBack}
-        variant="ghost"
-      >
-        Back to Mode Selection
-      </Button>
     </div>
   );
 };

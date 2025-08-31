@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
 import { insertCoin, useMultiplayerState, useIsHost, myPlayer, usePlayersList } from 'playroomkit';
-import APIKeyModal from '../components/APIKeyModal';
-import GameScreen from '../components/GameScreen';
-import ResultDisplay from '../components/ResultDisplay';
-import ModeSelector from '../components/ModeSelector';
 import RoomSetup from '../components/RoomSetup';
 import MultiplayerLobby from '../components/MultiplayerLobby';
 import MultiplayerGameScreen from '../components/MultiplayerGameScreen';
@@ -11,8 +7,7 @@ import MultiplayerVerdicts from '../components/MultiplayerVerdicts';
 import MultiplayerLeaderboard from '../components/MultiplayerLeaderboard';
 import { useGroqAPI } from '../hooks/useGroqAPI';
 
-type GameMode = 'menu' | 'single' | 'multi-setup' | 'lobby' | 'multiplayer';
-type GameState = 'setup' | 'playing' | 'result' | 'finished';
+type GameMode = 'multi-setup' | 'lobby' | 'multiplayer';
 type MultiplayerPhase = 'lobby' | 'collectingSubmissions' | 'evaluating' | 'showingVerdicts' | 'showingLeaderboard' | 'roomEnded';
 
 const scenarios = [
@@ -24,13 +19,9 @@ const scenarios = [
 ];
 
 const Index = () => {
-  const [gameMode, setGameMode] = useState<GameMode>('menu');
-  const [gameState, setGameState] = useState<GameState>('setup');
+  const [gameMode, setGameMode] = useState<GameMode>('multi-setup');
   const [apiKey, setApiKey] = useState('');
-  const [currentRound, setCurrentRound] = useState(1);
-  const [score, setScore] = useState(0);
   const [currentScenario, setCurrentScenario] = useState('');
-  const [lastResult, setLastResult] = useState({ narrative: '', survived: false });
   const [error, setError] = useState('');
   
   // Multiplayer state
@@ -76,26 +67,10 @@ const Index = () => {
   // Handle room end - kick all players back to menu
   useEffect(() => {
     if (multiplayerState.phase === 'roomEnded') {
-      setGameMode('menu');
+      setGameMode('multi-setup');
     }
   }, [multiplayerState.phase]);
 
-  // Mode selection handlers
-  const handleModeSelect = (mode: 'single' | 'multiplayer') => {
-    if (mode === 'single') {
-      setGameMode('single');
-      setGameState('setup');
-    } else {
-      setGameMode('multi-setup');
-    }
-  };
-
-  const handleBackToModeSelect = () => {
-    setGameMode('menu');
-    setGameState('setup');
-    setPlayerName('');
-    setRoomCode('');
-  };
 
   // Room handlers
   const generateRoomCode = () => {
@@ -201,47 +176,6 @@ const Index = () => {
     setGameMode('multiplayer');
   };
 
-  // Single player handlers
-  const handleApiKeySubmit = (key: string) => {
-    setApiKey(key);
-    setGameState('setup');
-  };
-
-  const startGame = () => {
-    setCurrentRound(1);
-    setScore(0);
-    setError('');
-    const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
-    setCurrentScenario(randomScenario);
-    setGameState('playing');
-  };
-
-  const handleStrategySubmit = async (strategy: string) => {
-    try {
-      setError('');
-      const result = await analyzeStrategy(currentScenario, strategy);
-      setLastResult(result);
-      
-      if (result.survived) {
-        setScore(prev => prev + 1);
-      }
-      
-      setGameState('result');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to analyze strategy');
-    }
-  };
-
-  const handleContinue = () => {
-    if (currentRound >= 3) {
-      setGameState('finished');
-    } else {
-      setCurrentRound(prev => prev + 1);
-      const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
-      setCurrentScenario(randomScenario);
-      setGameState('playing');
-    }
-  };
 
   // Multiplayer handlers
   const handleAdvanceToVerdicts = async () => {
@@ -335,7 +269,7 @@ const Index = () => {
   const handleEndGame = () => {
     if (!isHost) return;
     
-    setGameMode('menu');
+    setGameMode('multi-setup');
     // Reset the multiplayer state and set phase to signal room end
     setMultiplayerState({
       phase: 'roomEnded',
@@ -350,17 +284,6 @@ const Index = () => {
     });
   };
 
-  const resetGame = () => {
-    if (gameMode === 'single') {
-      setGameState('setup');
-    } else {
-      setGameMode('menu');
-    }
-    setCurrentRound(1);
-    setScore(0);
-    setError('');
-  };
-
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-2xl mx-auto">
@@ -372,17 +295,12 @@ const Index = () => {
           
         </header>
 
-        {gameMode === 'menu' && (
-          <ModeSelector onSelectMode={handleModeSelect} />
-        )}
-
         {gameMode === 'multi-setup' && (
           <RoomSetup
             playerName={playerName}
             setPlayerName={setPlayerName}
             onCreateRoom={handleCreateRoom}
             onJoinRoom={handleJoinRoom}
-            onBack={handleBackToModeSelect}
           />
         )}
 
@@ -394,74 +312,6 @@ const Index = () => {
           />
         )}
 
-        {gameMode === 'single' && gameState === 'setup' && !apiKey && (
-          <>
-            <APIKeyModal 
-              onApiKeySubmit={handleApiKeySubmit}
-              isVisible={true}
-            />
-          </>
-        )}
-
-        {gameMode === 'single' && gameState === 'setup' && apiKey && (
-          <div className="text-center">
-            <div className="bg-card border border-border p-6 rounded mb-4">
-              <h2 className="text-xl font-bold mb-4 text-card-foreground">Ready to Play</h2>
-              <p className="text-muted-foreground mb-4">
-                You will face 3 random survival scenarios. Each round you have 60 seconds to devise a strategy.
-                The AI will analyze your approach and determine if you survive or perish.
-              </p>
-              <p className="text-muted-foreground mb-4">
-                <strong>Scoring:</strong> 1 point per survival, 0 for death
-              </p>
-            </div>
-            <button
-              onClick={startGame}
-              className="bg-primary text-primary-foreground px-8 py-3 rounded text-lg hover:opacity-90"
-            >
-              Start Game
-            </button>
-          </div>
-        )}
-
-        {gameState === 'playing' && (
-          <GameScreen
-            scenario={currentScenario}
-            roundNumber={currentRound}
-            onStrategySubmit={handleStrategySubmit}
-            isLoading={isLoading}
-          />
-        )}
-
-        {gameState === 'result' && (
-          <ResultDisplay
-            narrative={lastResult.narrative}
-            survived={lastResult.survived}
-            onContinue={handleContinue}
-            roundNumber={currentRound}
-          />
-        )}
-
-        {gameState === 'finished' && (
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4 text-foreground">Final Score</h2>
-            <div className="bg-card border border-border p-6 rounded mb-4">
-              <div className="text-4xl font-bold mb-2 text-card-foreground">{score}/3</div>
-              <p className="text-muted-foreground">
-                {score === 3 && "Perfect! You're a survival master!"}
-                {score === 2 && "Great job! You survived most scenarios."}
-                {score === 1 && "Not bad, but room for improvement."}
-                {score === 0 && "Better luck next time, survival isn't easy!"}
-              </p>
-            </div>
-            <button
-              onClick={resetGame}
-              className="bg-primary text-primary-foreground px-6 py-2 rounded hover:opacity-90"
-            >
-              Play Again
-            </button>
-          </div>
-        )}
 
         {gameMode === 'multiplayer' && multiplayerState.phase === 'collectingSubmissions' && (
           <MultiplayerGameScreen
