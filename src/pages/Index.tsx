@@ -92,12 +92,13 @@ const Index = () => {
         skipLobby: true
       });
       
-      // Set player profile name and store in global state
+      // Set player profile name
       const me = myPlayer();
       if (me) {
         me.setState('profile', { name: playerName.trim() });
       }
       
+      // Store player name in global state
       const playerId = me?.id;
       setMultiplayerState({
         phase: 'lobby',
