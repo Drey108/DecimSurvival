@@ -28,7 +28,7 @@ const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLob
   }, [gameState.phase, gameState.hostApiKey, onStartGame]);
 
   const handleStartGame = () => {
-    if (hostApiKey.trim() && players.length >= 2) {
+    if (hostApiKey.trim() && players.length >= 1) {
       setGameState({
         ...gameState,
         hostApiKey,
@@ -81,15 +81,15 @@ const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLob
             />
             <Button
               onClick={handleStartGame}
-              disabled={!hostApiKey.trim() || players.length < 2}
+              disabled={!hostApiKey.trim() || players.length < 1}
               className="w-full"
               variant="default"
             >
               Start Game
             </Button>
-            {players.length < 2 && (
+            {players.length < 1 && (
               <p className="text-sm text-muted-foreground mt-2">
-                Need at least 2 players to start
+                Need at least 1 player to start
               </p>
             )}
           </div>
