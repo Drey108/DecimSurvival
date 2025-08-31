@@ -71,25 +71,6 @@ const Index = () => {
     }
   }, [multiplayerState.phase]);
 
-  // Set player name after room is synchronized
-  useEffect(() => {
-    if (gameMode === 'lobby' && playerName.trim()) {
-      const me = myPlayer();
-      if (me && me.id && !multiplayerState.playerNames[me.id]) {
-        // Set both profile name and shared state name
-        me.setState('profile', { name: playerName.trim() });
-        
-        setMultiplayerState({
-          ...multiplayerState,
-          playerNames: {
-            ...multiplayerState.playerNames,
-            [me.id]: playerName.trim()
-          }
-        });
-      }
-    }
-  }, [gameMode, playerName, multiplayerState.playerNames, setMultiplayerState]);
-
 
   // Room handlers
   const generateRoomCode = () => {
@@ -111,13 +92,19 @@ const Index = () => {
         skipLobby: true
       });
       
-      // Initialize multiplayer state without setting names yet
+      // Set player profile name and store in global state
+      const me = myPlayer();
+      if (me) {
+        me.setState('profile', { name: playerName.trim() });
+      }
+      
+      const playerId = me?.id;
       setMultiplayerState({
         phase: 'lobby',
         currentRound: 1,
         scenario: '',
         hostApiKey: '',
-        playerNames: {},
+        playerNames: playerId ? { [playerId]: playerName.trim() } : {},
         scores: {},
         submissions: {},
         verdicts: {},
@@ -142,6 +129,24 @@ const Index = () => {
         roomCode: code,
         skipLobby: true
       });
+      
+      // Set player profile name
+      const me = myPlayer();
+      if (me) {
+        me.setState('profile', { name: playerName.trim() });
+      }
+      
+      // Add player name to global state
+      const playerId = me?.id;
+      if (playerId) {
+        setMultiplayerState({
+          ...multiplayerState,
+          playerNames: {
+            ...multiplayerState.playerNames,
+            [playerId]: playerName.trim()
+          }
+        });
+      }
       
       setGameMode('lobby');
     } catch (error) {
