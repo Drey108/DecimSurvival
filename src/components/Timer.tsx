@@ -98,19 +98,9 @@ const Timer = ({ onTimeUp, isStopped = false }: TimerProps) => {
           {isStopped || playerSubmissionTime ? 'Submitted!' : 'Mission Timer'}
         </h4>
         
-        <div className={`inline-flex items-center justify-center w-32 h-32 rounded-full ${getTimerGlow()} bg-card/50 border-4 ${
-          isStopped || playerSubmissionTime ? 'border-success' :
-          timeLeft <= 10 ? 'border-destructive animate-pulse' : 
-          timeLeft <= 30 ? 'border-warning' : 
-          'border-success'
-        } mb-4`}>
-          <span className={`text-4xl font-orbitron font-black ${getTimerColor()}`}>
-            {isStopped || playerSubmissionTime ? '✓' : formatTime(timeLeft)}
-          </span>
-        </div>
         
-        {/* Progress Ring */}
-        <div className="relative w-40 h-40 mx-auto mb-4">
+        {/* Progress Ring with Glow */}
+        <div className={`relative w-40 h-40 mx-auto mb-4 ${getTimerGlow()}`}>
           <svg className="w-40 h-40 -rotate-90" viewBox="0 0 100 100">
             <circle
               cx="50"
