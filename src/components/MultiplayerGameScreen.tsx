@@ -20,7 +20,6 @@ const MultiplayerGameScreen = ({ scenario, roundNumber, onAdvanceToVerdicts }: M
     phase: 'collectingSubmissions',
     currentRound: 1,
     scenario: '',
-    hostApiKey: '',
     submissions: {},
     verdicts: {},
     scores: {},

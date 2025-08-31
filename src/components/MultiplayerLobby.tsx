@@ -1,37 +1,33 @@
 import { useState, useEffect } from 'react';
 import { usePlayersList, useIsHost, useMultiplayerState, myPlayer } from 'playroomkit';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 interface MultiplayerLobbyProps {
   roomCode: string;
-  onStartGame: (apiKey: string) => void;
+  onStartGame: () => void;
   onLeaveRoom: () => void;
 }
 
 const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLobbyProps) => {
-  const [hostApiKey, setHostApiKey] = useState('');
   const players = usePlayersList(true);
   const isHost = useIsHost();
   const [gameState, setGameState] = useMultiplayerState('game', {
     phase: 'lobby',
     currentRound: 1,
-    scenario: '',
-    hostApiKey: ''
+    scenario: ''
   });
 
   // Auto-start game for all players when host starts
   useEffect(() => {
-    if (gameState.phase === 'game' && gameState.hostApiKey) {
-      onStartGame(gameState.hostApiKey);
+    if (gameState.phase === 'game') {
+      onStartGame();
     }
-  }, [gameState.phase, gameState.hostApiKey, onStartGame]);
+  }, [gameState.phase, onStartGame]);
 
   const handleStartGame = () => {
-    if (hostApiKey.trim() && players.length >= 1) {
+    if (players.length >= 1) {
       setGameState({
         ...gameState,
-        hostApiKey,
         phase: 'game'
       });
     }
@@ -117,37 +113,18 @@ const MultiplayerLobby = ({ roomCode, onStartGame, onLeaveRoom }: MultiplayerLob
             <div className="glass-card p-6 rounded-2xl border border-primary/20">
               <h4 className="text-lg font-orbitron font-bold text-foreground mb-4 flex items-center">
                 <span className="w-2 h-2 bg-primary rounded-full mr-3"></span>
-                Host Configuration
+                Mission Control
               </h4>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-foreground mb-2 flex items-center">
-                    <span className="w-1.5 h-1.5 bg-warning rounded-full mr-2"></span>
-                    Groq API Key (Required for AI Analysis)
-                  </label>
-                  <Input
-                    type="password"
-                    value={hostApiKey}
-                    onChange={(e) => setHostApiKey(e.target.value)}
-                    placeholder="Enter your Groq API key"
-                    className="glass-card bg-secondary/30 border-warning/20 text-foreground placeholder:text-muted-foreground h-12 font-mono focus:border-warning/50 focus:ring-warning/30"
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Required to analyze survival strategies with AI
-                  </p>
-                </div>
-                
-                <Button
-                  onClick={handleStartGame}
-                  disabled={!hostApiKey.trim()}
-                  className="btn-primary-glow w-full h-14 text-lg font-semibold rounded-xl disabled:opacity-50"
-                >
-                  <span className="flex items-center justify-center space-x-2">
-                    <span>🎯</span>
-                    <span>Launch Mission</span>
-                  </span>
-                </Button>
-              </div>
+              <Button
+                onClick={handleStartGame}
+                disabled={players.length < 1}
+                className="btn-primary-glow w-full h-14 text-lg font-semibold rounded-xl disabled:opacity-50"
+              >
+                <span className="flex items-center justify-center space-x-2">
+                  <span>🎯</span>
+                  <span>Launch Mission</span>
+                </span>
+              </Button>
             </div>
           </div>
         )}

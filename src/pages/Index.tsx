@@ -20,7 +20,6 @@ const scenarios = [
 
 const Index = () => {
   const [gameMode, setGameMode] = useState<GameMode>('multi-setup');
-  const [apiKey, setApiKey] = useState('');
   const [currentScenario, setCurrentScenario] = useState('');
   const [error, setError] = useState('');
   
@@ -33,7 +32,6 @@ const Index = () => {
     phase: 'lobby' as MultiplayerPhase,
     currentRound: 1,
     scenario: '',
-    hostApiKey: '',
     submissions: {},
     verdicts: {},
     scores: {},
@@ -46,7 +44,7 @@ const Index = () => {
   const isHost = useIsHost();
   const players = usePlayersList(true);
 
-  const { analyzeStrategy, isLoading } = useGroqAPI(apiKey);
+  const { analyzeStrategy, isLoading } = useGroqAPI();
 
   // Handle room end - kick all players back to menu
   useEffect(() => {
@@ -88,7 +86,6 @@ const Index = () => {
         phase: 'lobby',
         currentRound: 1,
         scenario: '',
-        hostApiKey: '',
         playerNames: playerId ? { [playerId]: playerName.trim() } : {},
         scores: {},
         submissions: {},
@@ -147,14 +144,12 @@ const Index = () => {
     setRoomCode('');
   };
 
-  const handleMultiplayerStartGame = (hostApiKey: string) => {
-    setApiKey(hostApiKey);
+  const handleMultiplayerStartGame = () => {
     const scenario = scenarios[multiplayerState.currentRound - 1] || scenarios[0];
     setCurrentScenario(scenario);
     const roundEndTime = Date.now() + 60000; // 60 seconds from now
     setMultiplayerState({
       ...multiplayerState,
-      hostApiKey,
       phase: 'collectingSubmissions',
       scenario,
         roundEndTime,
@@ -292,7 +287,6 @@ const Index = () => {
       phase: 'roomEnded',
       currentRound: 1,
       scenario: '',
-      hostApiKey: '',
       submissions: {},
       verdicts: {},
       scores: {},

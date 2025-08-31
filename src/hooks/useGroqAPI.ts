@@ -5,13 +5,19 @@ interface GroqResponse {
   survived: boolean;
 }
 
-export const useGroqAPI = (apiKey: string) => {
+export const useGroqAPI = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const analyzeStrategy = async (scenario: string, strategy: string): Promise<GroqResponse> => {
     setIsLoading(true);
     setError(null);
+
+    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('VITE_GROQ_API_KEY environment variable is not configured');
+    }
 
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
