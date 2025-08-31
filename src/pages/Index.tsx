@@ -339,7 +339,7 @@ const Index = () => {
               {/* Hero Section */}
               <div className="text-center mb-12 pt-8">
                 <div className="hero-gradient rounded-3xl p-12 mb-8">
-                  <h2 className="text-6xl md:text-8xl font-orbitron font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-warning to-primary mb-6 animate-float">
+                  <h2 className="text-6xl md:text-8xl font-orbitron font-black text-primary mb-6 animate-float">
                     SURVIVE
                   </h2>
                   <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">

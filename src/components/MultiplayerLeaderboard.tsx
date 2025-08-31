@@ -81,7 +81,7 @@ const MultiplayerLeaderboard = ({
           <div className="w-32 h-32 bg-primary/20 rounded-3xl flex items-center justify-center mx-auto mb-8 animate-float">
             <span className="text-6xl">🏆</span>
           </div>
-          <h2 className="text-5xl font-orbitron font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-warning to-primary mb-4">
+          <h2 className="text-5xl font-orbitron font-black text-primary mb-4">
             {isGameComplete ? 'MISSION COMPLETE' : `ROUND ${roundNumber}`}
           </h2>
           <h3 className="text-2xl font-orbitron font-bold text-foreground mb-6">
