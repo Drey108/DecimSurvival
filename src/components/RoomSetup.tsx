@@ -24,52 +24,50 @@ const RoomSetup = ({ playerName, setPlayerName, onCreateRoom, onJoinRoom }: Room
   };
 
   return (
-    <div className="text-center">
-      <div className="bg-card border border-border p-6 rounded mb-4">
-        <h2 className="text-xl font-bold mb-6 text-card-foreground">Multiplayer Setup</h2>
+    <div className="setup-screen text-center">
+      <div className="setup-card bg-card border border-border p-8 rounded-lg">
+        <h2 className="card-title text-2xl font-bold mb-8 text-primary">Join the Game</h2>
         
-        <div className="space-y-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-card-foreground">Your Name:</label>
-            <Input
-              type="text"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value.slice(0, 20))}
-              placeholder="Enter your name"
-              className="w-full"
-            />
-            {!playerName.trim() && (
-              <p className="text-sm text-destructive mt-1">Name is required</p>
-            )}
-          </div>
+        <div className="name-section mb-8">
+          <label className="field-label block text-sm font-medium mb-3 text-card-foreground">Your Name</label>
+          <Input
+            type="text"
+            value={playerName}
+            onChange={(e) => setPlayerName(e.target.value.slice(0, 20))}
+            placeholder="Enter your name"
+            className="name-input w-full text-center"
+          />
+          {!playerName.trim() && (
+            <p className="error-text text-sm text-destructive mt-2">Name is required</p>
+          )}
         </div>
 
-        <div className="space-y-4">
+        <div className="actions-section space-y-6">
           <Button
             onClick={onCreateRoom}
             disabled={!playerName.trim()}
-            className="w-full"
+            className="create-button w-full py-3"
             variant="default"
           >
             Create New Room
           </Button>
           
-          <div className="text-muted-foreground">OR</div>
+          <div className="divider text-muted-foreground font-light">OR</div>
           
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-card-foreground">Room Code:</label>
+          <div className="join-section space-y-3">
+            <label className="field-label block text-sm font-medium text-card-foreground">Room Code</label>
             <Input
               type="text"
               value={joinRoomCode}
               onChange={handleJoinRoomCodeChange}
               placeholder="A1B2"
-              className="w-full text-center font-mono text-lg"
+              className="room-input w-full text-center font-mono text-xl tracking-widest"
               maxLength={4}
             />
             <Button
               onClick={handleJoinRoom}
               disabled={!playerName.trim() || joinRoomCode.length !== 4}
-              className="w-full"
+              className="join-button w-full py-3"
               variant="outline"
             >
               Join Room

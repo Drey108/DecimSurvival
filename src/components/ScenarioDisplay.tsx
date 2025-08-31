@@ -6,16 +6,16 @@ interface ScenarioDisplayProps {
 
 const ScenarioDisplay = ({ scenario, roundNumber, timerComponent }: ScenarioDisplayProps) => {
   return (
-    <div className="mb-6">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-xl font-bold text-foreground">
+    <div className="scenario-section mb-8">
+      <div className="scenario-header flex justify-between items-center mb-4">
+        <h2 className="round-title text-2xl font-bold text-primary">
           Round {roundNumber} of 3
         </h2>
         {timerComponent}
       </div>
-      <div className="bg-card border border-border p-4 rounded">
-        <h3 className="font-semibold mb-2 text-card-foreground">Survival Scenario:</h3>
-        <p className="text-card-foreground">{scenario}</p>
+      <div className="scenario-card bg-card border border-border p-6 rounded-lg">
+        <h3 className="scenario-title font-semibold mb-3 text-primary">Survival Scenario</h3>
+        <p className="scenario-text text-card-foreground text-lg leading-relaxed">{scenario}</p>
       </div>
     </div>
   );

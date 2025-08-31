@@ -285,14 +285,13 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-2xl mx-auto">
-        <header className="text-center mb-8 relative">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
+    <main className="min-h-screen bg-background p-8">
+      <div className="container max-w-4xl mx-auto">
+        <header className="header text-center mb-12">
+          <h1 className="title text-5xl font-bold text-primary mb-3">
             <span className="font-papyrus">Decim</span>
           </h1>
-          <p className="text-muted-foreground">Survival Game</p>
-          
+          <p className="subtitle text-lg text-muted-foreground">Survival Strategy Game</p>
         </header>
 
         {gameMode === 'multi-setup' && (
@@ -322,9 +321,9 @@ const Index = () => {
         )}
 
         {gameMode === 'multiplayer' && multiplayerState.phase === 'evaluating' && (
-          <div className="text-center">
-            <div className="text-xl mb-4">AI is analyzing all strategies...</div>
-            <div className="text-muted-foreground">This may take a few moments...</div>
+          <div className="loading-screen text-center py-16">
+            <div className="status-text text-2xl font-bold text-primary mb-4">AI is analyzing strategies...</div>
+            <div className="status-subtext text-muted-foreground">Please wait while we evaluate all submissions</div>
           </div>
         )}
 
@@ -348,12 +347,12 @@ const Index = () => {
         )}
 
         {error && (
-          <div className="mt-4 p-4 bg-destructive text-destructive-foreground rounded">
-            <strong>Error:</strong> {error}
+          <div className="error-message mt-6 p-4 bg-destructive/20 border border-destructive rounded-lg">
+            <div className="error-text text-destructive font-medium">Error: {error}</div>
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 };
 

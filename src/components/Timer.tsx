@@ -53,8 +53,11 @@ const Timer = ({ onTimeUp }: TimerProps) => {
   };
 
   return (
-    <div className={`text-2xl font-bold ${getTimerColor()}`}>
-      Time: {formatTime(timeLeft)}
+    <div className="timer-card bg-card border border-border p-4 rounded-lg text-center">
+      <div className="timer-label text-sm text-muted-foreground mb-1">Time Remaining</div>
+      <div className={`timer-display text-3xl font-bold ${getTimerColor()}`}>
+        {formatTime(timeLeft)}
+      </div>
     </div>
   );
 };
