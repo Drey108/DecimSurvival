@@ -110,12 +110,10 @@ const Index = () => {
         skipLobby: true
       });
       
-      // Set player profile name immediately after connection
+      // Set player profile name
       const me = myPlayer();
       if (me) {
         me.setState('profile', { name: playerName.trim() });
-        // Force update the profile to ensure it's set
-        me.setState('displayName', playerName.trim());
       }
       
       // Store player name in global state
@@ -151,12 +149,10 @@ const Index = () => {
         skipLobby: true
       });
       
-      // Set player profile name immediately after connection
+      // Set player profile name
       const me = myPlayer();
       if (me) {
         me.setState('profile', { name: playerName.trim() });
-        // Force update the profile to ensure it's set
-        me.setState('displayName', playerName.trim());
       }
       
       // Add player name to global state
