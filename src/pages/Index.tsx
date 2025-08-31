@@ -13,7 +13,7 @@ import { useGroqAPI } from '../hooks/useGroqAPI';
 
 type GameMode = 'menu' | 'single' | 'multi-setup' | 'lobby' | 'multiplayer';
 type GameState = 'setup' | 'playing' | 'result' | 'finished';
-type MultiplayerPhase = 'lobby' | 'collectingSubmissions' | 'evaluating' | 'showingVerdicts' | 'showingLeaderboard';
+type MultiplayerPhase = 'lobby' | 'collectingSubmissions' | 'evaluating' | 'showingVerdicts' | 'showingLeaderboard' | 'roomEnded';
 
 const scenarios = [
   "Zombie outbreak in shopping mall. You're trapped with limited supplies. Survive 24 hours.",
@@ -72,6 +72,13 @@ const Index = () => {
   }
 
   const { analyzeStrategy, isLoading } = useGroqAPI(apiKey);
+
+  // Handle room end - kick all players back to menu
+  useEffect(() => {
+    if (multiplayerState.phase === 'roomEnded') {
+      setGameMode('menu');
+    }
+  }, [multiplayerState.phase]);
 
   // Mode selection handlers
   const handleModeSelect = (mode: 'single' | 'multiplayer') => {
@@ -329,8 +336,9 @@ const Index = () => {
     if (!isHost) return;
     
     setGameMode('menu');
+    // Reset the multiplayer state and set phase to signal room end
     setMultiplayerState({
-      phase: 'lobby',
+      phase: 'roomEnded',
       currentRound: 1,
       scenario: '',
       hostApiKey: '',
