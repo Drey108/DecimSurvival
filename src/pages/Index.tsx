@@ -28,39 +28,22 @@ const Index = () => {
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   
-  // Initialize multiplayer state with error handling
-  let multiplayerState, setMultiplayerState, isHost, players;
-  try {
-    [multiplayerState, setMultiplayerState] = useMultiplayerState('game', {
-      phase: 'lobby' as MultiplayerPhase,
-      currentRound: 1,
-      scenario: '',
-      hostApiKey: '',
-      submissions: {},
-      verdicts: {},
-      scores: {},
-      playerNames: {},
-      leaderboard: []
-    });
-    isHost = useIsHost();
-    players = usePlayersList(true);
-  } catch (e) {
-    // Fallback to default values if multiplayer fails
-    multiplayerState = { 
-      phase: 'lobby' as MultiplayerPhase, 
-      currentRound: 1, 
-      scenario: '', 
-      hostApiKey: '',
-      submissions: {},
-      verdicts: {},
-      scores: {},
-      playerNames: {},
-      leaderboard: []
-    };
-    setMultiplayerState = () => {};
-    isHost = false;
-    players = [];
-  }
+  // Initialize multiplayer state
+  const [multiplayerState, setMultiplayerState] = useMultiplayerState('game', {
+    phase: 'lobby' as MultiplayerPhase,
+    currentRound: 1,
+    scenario: '',
+    hostApiKey: '',
+    submissions: {},
+    verdicts: {},
+    scores: {},
+    playerNames: {},
+    leaderboard: [],
+    roundEndTime: 0,
+    playersDone: {}
+  });
+  const isHost = useIsHost();
+  const players = usePlayersList(true);
 
   const { analyzeStrategy, isLoading } = useGroqAPI(apiKey);
 
@@ -109,7 +92,9 @@ const Index = () => {
         scores: {},
         submissions: {},
         verdicts: {},
-        leaderboard: []
+        leaderboard: [],
+        roundEndTime: 0,
+        playersDone: {}
       });
       setGameMode('lobby');
     } catch (error) {
@@ -280,7 +265,9 @@ const Index = () => {
       verdicts: {},
       scores: {},
       playerNames: {},
-      leaderboard: []
+      leaderboard: [],
+      roundEndTime: 0,
+      playersDone: {}
     });
   };
 
