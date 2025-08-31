@@ -99,8 +99,8 @@ const Timer = ({ onTimeUp, isStopped = false }: TimerProps) => {
         </h4>
         
         
-        {/* Progress Ring with Glow */}
-        <div className={`relative w-40 h-40 mx-auto mb-4 ${getTimerGlow()}`}>
+        {/* Progress Ring */}
+        <div className="relative w-40 h-40 mx-auto mb-4">
           <svg className="w-40 h-40 -rotate-90" viewBox="0 0 100 100">
             <circle
               cx="50"
