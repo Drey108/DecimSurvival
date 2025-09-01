@@ -172,10 +172,6 @@ const MultiplayerGameScreen = ({ scenario, roundNumber, onAdvanceToVerdicts }: M
       <div className="w-80 bg-card/50 border-l border-border/50 p-6 space-y-6">
         {/* Timer Section */}
         <div className="space-y-4">
-          <h4 className="font-orbitron font-bold text-lg text-foreground flex items-center">
-            <span className="w-2 h-2 bg-primary rounded-full mr-3 animate-pulse"></span>
-            Mission Timer
-          </h4>
           <Timer onTimeUp={handleTimeUp} isStopped={hasSubmitted} />
         </div>
 
