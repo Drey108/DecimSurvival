@@ -93,9 +93,9 @@ const Timer = ({ onTimeUp, isStopped = false }: TimerProps) => {
       <div className="text-center">
         <h4 className="font-orbitron font-bold text-lg text-foreground mb-4 flex items-center justify-center">
           <span className={`w-2 h-2 rounded-full mr-3 ${
-            isStopped || playerSubmissionTime ? 'bg-success' : ''
+            isStopped || playerSubmissionTime ? 'bg-success' : 'bg-destructive animate-pulse'
           }`}></span>
-          {isStopped || playerSubmissionTime ? 'Submitted!' : ''}
+          {isStopped || playerSubmissionTime ? 'Submitted!' : 'Mission Timer'}
         </h4>
         
         
