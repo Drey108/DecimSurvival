@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { insertCoin, useMultiplayerState, useIsHost, myPlayer, usePlayersList } from 'playroomkit';
+import * as playroomkit from 'playroomkit';
 import RoomSetup from '../components/RoomSetup';
 import MultiplayerLobby from '../components/MultiplayerLobby';
 import MultiplayerGameScreen from '../components/MultiplayerGameScreen';
@@ -9,6 +10,14 @@ import { useGroqAPI } from '../hooks/useGroqAPI';
 
 type GameMode = 'multi-setup' | 'lobby' | 'multiplayer';
 type MultiplayerPhase = 'lobby' | 'collectingSubmissions' | 'evaluating' | 'showingVerdicts' | 'showingLeaderboard' | 'roomEnded';
+
+type PlayroomWithLeave = typeof playroomkit & {
+  Multiplayer?: () => { leaveRoom?: () => void };
+};
+
+const leavePlayroom = () => {
+  (playroomkit as PlayroomWithLeave).Multiplayer?.().leaveRoom?.();
+};
 
 const scenarios = [
   "Zombie outbreak in shopping mall. You're trapped with limited supplies. Survive 24 hours.",
@@ -49,9 +58,9 @@ const Index = () => {
   // Handle room end - kick all players back to menu
   useEffect(() => {
     if (multiplayerState.phase === 'roomEnded') {
-      // Reset local state and go back to setup
       setGameMode('multi-setup');
       setRoomCode('');
+      leavePlayroom();
     }
   }, [multiplayerState.phase]);
 
@@ -142,6 +151,7 @@ const Index = () => {
   };
 
   const handleLeaveRoom = () => {
+    leavePlayroom();
     setGameMode('multi-setup');
     setRoomCode('');
   };
@@ -214,8 +224,9 @@ const Index = () => {
           
           scores[playerId] = (scores[playerId] || 0) + playerScore;
         } catch (error) {
+          setError(error instanceof Error ? error.message : 'Failed to analyze strategy');
           verdicts[playerId] = {
-            narrative: 'Failed to analyze strategy.',
+            narrative: 'This strategy could not be analyzed. Check the AI configuration and try again.',
             survived: false
           };
         }
